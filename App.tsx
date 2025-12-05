@@ -1,5 +1,6 @@
+
 import React, { useState, useEffect, useCallback } from 'react';
-import { Play, Pause, RotateCcw, Activity, BrainCircuit, StepForward, Sun, Moon, Layout, X, Plus, Globe } from 'lucide-react';
+import { Play, Pause, RotateCcw, Activity, BrainCircuit, StepForward, Sun, Moon, Layout, X, Plus, Globe, Github, ChevronUp } from 'lucide-react';
 import { Process, AlgorithmType, SchedulerState, AnalysisReport, Language } from './types';
 import { INITIAL_PROCESSES, ALGORITHMS } from './constants';
 import { stepSimulation, resetSimulation } from './services/schedulerLogic';
@@ -23,6 +24,7 @@ const MainApp: React.FC = () => {
   const [algorithm, setAlgorithm] = useState<AlgorithmType>('FCFS');
   const [quantum, setQuantum] = useState(2);
   const [simulationSpeed, setSimulationSpeed] = useState(1000); 
+  const [isAlgoDropdownOpen, setIsAlgoDropdownOpen] = useState(false);
 
   // --- Simulation State ---
   const [schedulerState, setSchedulerState] = useState<SchedulerState>(
@@ -54,6 +56,27 @@ const MainApp: React.FC = () => {
     setBaseProcesses(updated);
     if (schedulerState.currentTime === 0 || schedulerState.isFinished) {
         setSchedulerState(resetSimulation(updated, quantum));
+    }
+  };
+
+  const handleUpdateProcess = (id: string, updates: Partial<Process>) => {
+    const updatedProcesses = baseProcesses.map(p => {
+      if (p.id === id) {
+        // If burst time is updated, we must update remaining time if simulation hasn't really started/is reset
+        const newProcess = { ...p, ...updates };
+        if ('burstTime' in updates) {
+           newProcess.remainingTime = updates.burstTime as number;
+        }
+        return newProcess;
+      }
+      return p;
+    });
+
+    setBaseProcesses(updatedProcesses);
+    
+    // Auto-update visualizer if we are at the start or finished
+    if (schedulerState.currentTime === 0 || schedulerState.isFinished) {
+      setSchedulerState(resetSimulation(updatedProcesses, quantum));
     }
   };
 
@@ -146,6 +169,17 @@ const MainApp: React.FC = () => {
              </button>
 
              <div className="h-8 w-[1px] bg-slate-200 dark:bg-slate-700 mx-1 hidden sm:block"></div>
+
+              {/* GitHub Link */}
+             <a
+               href="https://github.com/your-username/cpu-scheduler" // Replace with actual repo URL
+               target="_blank"
+               rel="noopener noreferrer"
+               className="p-2.5 rounded-xl bg-white/50 dark:bg-slate-800/50 hover:bg-white dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition-all border border-transparent hover:border-slate-200 dark:hover:border-slate-600 active:scale-95 hidden sm:flex items-center justify-center"
+               title="GitHub Repo"
+             >
+                <Github size={18} />
+             </a>
              
              {/* Language Dropdown */}
              <div className="relative">
@@ -204,6 +238,7 @@ const MainApp: React.FC = () => {
              <ProcessForm 
                processes={baseProcesses} 
                onAddProcess={handleAddProcess} 
+               onUpdateProcess={handleUpdateProcess}
                onClear={handleClear}
                disabled={isPlaying && !schedulerState.isFinished} 
              />
@@ -222,6 +257,7 @@ const MainApp: React.FC = () => {
                    <ProcessForm 
                      processes={baseProcesses} 
                      onAddProcess={(p) => { handleAddProcess(p); setMobileInputOpen(false); }} 
+                     onUpdateProcess={handleUpdateProcess}
                      onClear={() => { handleClear(); setMobileInputOpen(false); }}
                      disabled={isPlaying && !schedulerState.isFinished} 
                    />
@@ -292,25 +328,44 @@ const MainApp: React.FC = () => {
        <div className="fixed bottom-6 left-0 right-0 flex justify-center z-40 px-4">
           <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-2xl border border-white/20 dark:border-slate-700/50 shadow-2xl rounded-2xl p-2.5 flex items-center gap-4 transition-all hover:scale-[1.02] duration-300 max-w-full overflow-x-auto scrollbar-hide">
              
-             {/* Algorithm Select */}
-             <div className="relative group border-r border-slate-200 dark:border-slate-700 pr-4 mr-2 flex-shrink-0">
+             {/* Algorithm Select - Custom Dropdown */}
+             <div className="relative border-r border-slate-200 dark:border-slate-700 pr-4 mr-2 flex-shrink-0">
                 <div className="flex flex-col">
                   <span className="text-[9px] font-bold text-slate-400 uppercase mb-0.5">{t.algorithm}</span>
-                  <select 
-                      value={algorithm} 
-                      onChange={(e) => setAlgorithm(e.target.value as AlgorithmType)}
-                      className="bg-transparent text-sm font-bold text-slate-800 dark:text-white outline-none cursor-pointer min-w-[120px]"
-                      disabled={isPlaying && !schedulerState.isFinished}
-                    >
-                      {ALGORITHMS.map(a => (
-                        <option key={a.id} value={a.id} className="text-slate-800">
-                          {t.algoNames[a.id as keyof typeof t.algoNames]}
-                        </option>
-                      ))}
-                    </select>
+                  
+                  <button 
+                    onClick={() => !isPlaying && setIsAlgoDropdownOpen(!isAlgoDropdownOpen)}
+                    disabled={isPlaying && !schedulerState.isFinished}
+                    className="flex items-center gap-2 text-sm font-bold text-slate-800 dark:text-white outline-none min-w-[140px] justify-between disabled:opacity-50"
+                  >
+                    <span className="truncate">{t.algoNames[algorithm]}</span>
+                    <ChevronUp size={14} className={`transition-transform duration-300 ${isAlgoDropdownOpen ? 'rotate-180' : ''}`} />
+                  </button>
+
+                  {/* Dropdown Menu */}
+                  {isAlgoDropdownOpen && (
+                    <>
+                        <div className="fixed inset-0 z-10" onClick={() => setIsAlgoDropdownOpen(false)}></div>
+                        <div className="absolute bottom-full left-0 mb-2 w-64 bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl border border-white/20 dark:border-slate-700/50 rounded-xl shadow-xl z-20 overflow-hidden flex flex-col animate-fade-in-up">
+                            {ALGORITHMS.map(a => (
+                                <button
+                                    key={a.id}
+                                    onClick={() => {
+                                        setAlgorithm(a.id as AlgorithmType);
+                                        setIsAlgoDropdownOpen(false);
+                                    }}
+                                    className={`px-4 py-3 text-left text-xs font-bold hover:bg-indigo-50 dark:hover:bg-indigo-900/30 transition-colors border-b last:border-0 border-slate-100 dark:border-slate-800 ${algorithm === a.id ? 'text-indigo-600 dark:text-indigo-400 bg-indigo-50/50 dark:bg-indigo-900/20' : 'text-slate-600 dark:text-slate-400'}`}
+                                >
+                                    {t.algoNames[a.id as keyof typeof t.algoNames]}
+                                </button>
+                            ))}
+                        </div>
+                    </>
+                  )}
                 </div>
+                
                 {algorithm === 'RR' && (
-                  <div className="absolute bottom-full left-0 mb-4 bg-white dark:bg-slate-800 p-3 rounded-xl shadow-xl border border-slate-200 dark:border-slate-700 flex flex-col w-32 animate-fade-in-up">
+                  <div className="absolute bottom-full left-0 mb-4 ml-40 bg-white dark:bg-slate-800 p-3 rounded-xl shadow-xl border border-slate-200 dark:border-slate-700 flex flex-col w-32 animate-fade-in-up">
                       <label className="text-[10px] text-slate-400 font-bold mb-1">{t.timeQuantum}</label>
                       <input 
                         type="number" min="1" value={quantum} 

@@ -7,11 +7,12 @@ import { useLanguage } from '../contexts/LanguageContext';
 interface ProcessFormProps {
   processes: Process[];
   onAddProcess: (p: { arrivalTime: number; burstTime: number; priority: number; color: string }) => void;
+  onUpdateProcess: (id: string, p: Partial<Process>) => void;
   onClear: () => void;
   disabled: boolean;
 }
 
-export const ProcessForm: React.FC<ProcessFormProps> = ({ processes, onAddProcess, onClear, disabled }) => {
+export const ProcessForm: React.FC<ProcessFormProps> = ({ processes, onAddProcess, onUpdateProcess, onClear, disabled }) => {
   const [arrivalTime, setArrivalTime] = useState(0);
   const [burstTime, setBurstTime] = useState(1);
   const [priority, setPriority] = useState(1);
@@ -89,25 +90,62 @@ export const ProcessForm: React.FC<ProcessFormProps> = ({ processes, onAddProces
         </button>
       </form>
 
-      {/* Mini List */}
+      {/* Mini List - Editable */}
       <div className="flex-1 overflow-y-auto pr-1 space-y-2 scrollbar-hide min-h-0 bg-slate-50/50 dark:bg-slate-800/20 rounded-xl p-2 border border-slate-100 dark:border-slate-700/50">
          {processes.map((p) => (
-            <div key={p.id} className="group flex items-center justify-between p-2.5 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md transition-all">
-               <div className="flex items-center gap-3">
-                 <div className="w-3.5 h-3.5 rounded-full shadow-sm ring-2 ring-white dark:ring-slate-700" style={{ backgroundColor: p.color }} />
-                 <div className="flex flex-col">
-                    <span className="text-xs font-bold text-slate-700 dark:text-slate-200">{p.name}</span>
-                 </div>
+            <div key={p.id} className="group flex items-center justify-between p-2 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md transition-all">
+               <div className="flex items-center gap-2 flex-grow">
+                 <div className="w-3 h-3 flex-shrink-0 rounded-full shadow-sm ring-1 ring-white dark:ring-slate-700" style={{ backgroundColor: p.color }} />
+                 <input 
+                   type="text" 
+                   value={p.name}
+                   onChange={(e) => onUpdateProcess(p.id, { name: e.target.value })}
+                   disabled={disabled}
+                   className="w-16 bg-transparent text-xs font-bold text-slate-700 dark:text-slate-200 border-b border-transparent focus:border-indigo-500 outline-none hover:border-slate-300 dark:hover:border-slate-600 transition-colors p-0.5 truncate"
+                 />
                </div>
-               <div className="flex items-center gap-2 text-[10px] text-slate-500 dark:text-slate-400 font-mono">
-                  <span className="bg-slate-100 dark:bg-slate-900 px-1.5 py-0.5 rounded">AT:{p.arrivalTime}</span>
-                  <span className="bg-slate-100 dark:bg-slate-900 px-1.5 py-0.5 rounded">BT:{p.burstTime}</span>
-                  <span className="bg-slate-100 dark:bg-slate-900 px-1.5 py-0.5 rounded">PR:{p.priority}</span>
+               
+               <div className="flex items-center gap-1.5 text-[10px] text-slate-500 dark:text-slate-400 font-mono">
+                  {/* Arrival Time Input */}
+                  <div className="flex items-center bg-slate-100 dark:bg-slate-900 rounded px-1 border border-transparent hover:border-indigo-300 dark:hover:border-indigo-700 transition-colors focus-within:border-indigo-500">
+                    <span className="text-slate-400 select-none mr-0.5">AT:</span>
+                    <input 
+                      type="number" min="0" 
+                      value={p.arrivalTime}
+                      onChange={(e) => onUpdateProcess(p.id, { arrivalTime: parseInt(e.target.value) || 0 })}
+                      disabled={disabled}
+                      className="w-6 bg-transparent outline-none text-center font-bold text-slate-700 dark:text-slate-300"
+                    />
+                  </div>
+
+                  {/* Burst Time Input */}
+                  <div className="flex items-center bg-slate-100 dark:bg-slate-900 rounded px-1 border border-transparent hover:border-indigo-300 dark:hover:border-indigo-700 transition-colors focus-within:border-indigo-500">
+                    <span className="text-slate-400 select-none mr-0.5">BT:</span>
+                    <input 
+                      type="number" min="1" 
+                      value={p.burstTime}
+                      onChange={(e) => onUpdateProcess(p.id, { burstTime: parseInt(e.target.value) || 1 })}
+                      disabled={disabled}
+                      className="w-6 bg-transparent outline-none text-center font-bold text-slate-700 dark:text-slate-300"
+                    />
+                  </div>
+
+                  {/* Priority Input */}
+                  <div className="flex items-center bg-slate-100 dark:bg-slate-900 rounded px-1 border border-transparent hover:border-indigo-300 dark:hover:border-indigo-700 transition-colors focus-within:border-indigo-500">
+                    <span className="text-slate-400 select-none mr-0.5">PR:</span>
+                    <input 
+                      type="number" min="1" 
+                      value={p.priority}
+                      onChange={(e) => onUpdateProcess(p.id, { priority: parseInt(e.target.value) || 1 })}
+                      disabled={disabled}
+                      className="w-6 bg-transparent outline-none text-center font-bold text-slate-700 dark:text-slate-300"
+                    />
+                  </div>
                </div>
             </div>
          ))}
          {processes.length === 0 && (
-           <div className="h-full flex flex-col items-center justify-center text-slate-400 text-xs italic gap-2">
+           <div className="h-full flex flex-col items-center justify-center text-slate-400 text-xs italic gap-2 min-h-[100px]">
              <List size={24} className="opacity-20" />
              <span>{t.noProcesses}</span>
            </div>
