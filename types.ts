@@ -16,6 +16,7 @@ export interface Process {
 }
 
 export type AlgorithmType = 'FCFS' | 'SJF' | 'SRTF' | 'RR' | 'PRIORITY';
+export type Language = 'IT' | 'EN';
 
 export interface SchedulerState {
   currentTime: number;
