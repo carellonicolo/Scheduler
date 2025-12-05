@@ -1,0 +1,5 @@
+{
+  "name": "Process Scheduler Simulator",
+  "description": "An interactive educational tool to visualize CPU scheduling algorithms (FCFS, SJF, RR, Priority) with real-time animations and AI-powered performance analysis.",
+  "requestFramePermissions": []
+}
