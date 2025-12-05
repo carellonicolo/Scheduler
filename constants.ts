@@ -1,5 +1,5 @@
 
-import { Language } from './types';
+import { Language } from './types.ts';
 
 export const PROCESS_COLORS = [
   '#ef4444', // Red 500

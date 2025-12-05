@@ -1,5 +1,5 @@
 import { GoogleGenAI } from "@google/genai";
-import { Process, AlgorithmType, Language } from "../types";
+import { Process, AlgorithmType, Language } from "../types.ts";
 
 export const analyzeSimulation = async (
   algorithm: AlgorithmType,
@@ -12,13 +12,13 @@ export const analyzeSimulation = async (
     const apiKey = (typeof process !== 'undefined' && process.env) ? process.env.API_KEY : undefined;
 
     if (!apiKey) {
-        return language === 'IT' 
-          ? "API Key mancante. Configurala nelle variabili d'ambiente." 
-          : "API Key is missing. Please configure it in the environment.";
+      return language === 'IT'
+        ? "API Key mancante. Configurala nelle variabili d'ambiente."
+        : "API Key is missing. Please configure it in the environment.";
     }
 
     const ai = new GoogleGenAI({ apiKey });
-    
+
     // Calculate aggregate stats
     const avgWait = processes.reduce((acc, p) => acc + p.waitingTime, 0) / processes.length;
     const avgTurnaround = processes.reduce((acc, p) => acc + p.turnaroundTime, 0) / processes.length;
@@ -71,8 +71,8 @@ export const analyzeSimulation = async (
     return response.text || (language === 'IT' ? "Nessuna analisi generata." : "No analysis generated.");
   } catch (error) {
     console.error("Gemini Error:", error);
-    return language === 'IT' 
-      ? "Impossibile generare l'analisi. Riprova più tardi o controlla la tua API key." 
+    return language === 'IT'
+      ? "Impossibile generare l'analisi. Riprova più tardi o controlla la tua API key."
       : "Failed to generate analysis. Please try again later or check your API key.";
   }
 };

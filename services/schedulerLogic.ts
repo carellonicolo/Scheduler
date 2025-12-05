@@ -1,4 +1,4 @@
-import { Process, SchedulerState, AlgorithmType, GanttBlock } from '../types';
+import { Process, SchedulerState, AlgorithmType, GanttBlock } from '../types.ts';
 
 // Helper to deep clone state to keep functions pure
 const cloneState = (state: SchedulerState): SchedulerState => ({
@@ -29,7 +29,7 @@ export const stepSimulation = (currentState: SchedulerState, algo: AlgorithmType
 
   if (next.currentProcessId) {
     const currentP = next.processes.find(p => p.id === next.currentProcessId)!;
-    
+
     // Decrement remaining time
     currentP.remainingTime--;
     next.quantumClock++;
@@ -53,12 +53,12 @@ export const stepSimulation = (currentState: SchedulerState, algo: AlgorithmType
       currentP.completionTime = currentTime + 1;
       currentP.turnaroundTime = currentP.completionTime - currentP.arrivalTime;
       currentP.waitingTime = currentP.turnaroundTime - currentP.burstTime;
-      
+
       next.completedQueue.push(currentP.id);
       next.currentProcessId = null;
       next.quantumClock = 0;
       justFinished = true;
-    } 
+    }
     // Check Round Robin Quantum Expiry
     else if (algo === 'RR' && next.quantumClock >= quantum) {
       currentP.state = 'ready';
@@ -68,18 +68,18 @@ export const stepSimulation = (currentState: SchedulerState, algo: AlgorithmType
     }
     // Check Preemption for SRTF (Arrival of shorter job)
     else if (algo === 'SRTF') {
-        // Look for a process in ready queue with strictly less time than current
-        const potentialPreempt = next.readyQueue.find(pid => {
-            const p = next.processes.find(proc => proc.id === pid)!;
-            return p.remainingTime < currentP.remainingTime;
-        });
+      // Look for a process in ready queue with strictly less time than current
+      const potentialPreempt = next.readyQueue.find(pid => {
+        const p = next.processes.find(proc => proc.id === pid)!;
+        return p.remainingTime < currentP.remainingTime;
+      });
 
-        if (potentialPreempt) {
-            currentP.state = 'ready';
-            next.readyQueue.push(currentP.id); // Put back
-            next.currentProcessId = null; // Will pick new one below
-            // Note: SRTF usually re-evaluates the whole queue, implemented below
-        }
+      if (potentialPreempt) {
+        currentP.state = 'ready';
+        next.readyQueue.push(currentP.id); // Put back
+        next.currentProcessId = null; // Will pick new one below
+        // Note: SRTF usually re-evaluates the whole queue, implemented below
+      }
     }
   }
 
@@ -96,60 +96,60 @@ export const stepSimulation = (currentState: SchedulerState, algo: AlgorithmType
           selectedId = next.readyQueue[0];
           selectedIndex = 0;
           break;
-        
+
         case 'SJF': // Non-preemptive
         case 'SRTF': // Preemptive (Selection logic is same, preemption happens in step 2)
           // Find min burst/remaining time
           let minTime = Infinity;
           next.readyQueue.forEach((pid, idx) => {
-             const p = next.processes.find(proc => proc.id === pid)!;
-             // For SJF/SRTF, we look at remaining time (dynamic) or burst time (static)?
-             // Usually SJF implies dynamic remaining time for SRTF, and burst for SJF.
-             // However, strictly: SJF uses initial Burst. SRTF uses Remaining.
-             const metric = algo === 'SRTF' ? p.remainingTime : p.burstTime;
-             
-             // Tie breaker: Arrival Time, then ID
-             if (metric < minTime) {
-               minTime = metric;
-               selectedId = pid;
-               selectedIndex = idx;
-             } else if (metric === minTime) {
-                // If equal, usually FCFS logic applies (Arrival Time)
-                const currentSelected = next.processes.find(proc => proc.id === selectedId)!;
-                if (p.arrivalTime < currentSelected.arrivalTime) {
-                   selectedId = pid;
-                   selectedIndex = idx;
-                }
-             }
+            const p = next.processes.find(proc => proc.id === pid)!;
+            // For SJF/SRTF, we look at remaining time (dynamic) or burst time (static)?
+            // Usually SJF implies dynamic remaining time for SRTF, and burst for SJF.
+            // However, strictly: SJF uses initial Burst. SRTF uses Remaining.
+            const metric = algo === 'SRTF' ? p.remainingTime : p.burstTime;
+
+            // Tie breaker: Arrival Time, then ID
+            if (metric < minTime) {
+              minTime = metric;
+              selectedId = pid;
+              selectedIndex = idx;
+            } else if (metric === minTime) {
+              // If equal, usually FCFS logic applies (Arrival Time)
+              const currentSelected = next.processes.find(proc => proc.id === selectedId)!;
+              if (p.arrivalTime < currentSelected.arrivalTime) {
+                selectedId = pid;
+                selectedIndex = idx;
+              }
+            }
           });
           break;
 
         case 'PRIORITY':
-           // Lower number = Higher Priority (Unix style) or Higher = Higher?
-           // Let's assume Lower Number = Higher Priority
-           let minPriority = Infinity;
-           next.readyQueue.forEach((pid, idx) => {
-               const p = next.processes.find(proc => proc.id === pid)!;
-               if (p.priority < minPriority) {
-                   minPriority = p.priority;
-                   selectedId = pid;
-                   selectedIndex = idx;
-               } else if (p.priority === minPriority) {
-                   // FCFS tie breaker
-                   const currentSelected = next.processes.find(proc => proc.id === selectedId)!;
-                   if (p.arrivalTime < currentSelected.arrivalTime) {
-                       selectedId = pid;
-                       selectedIndex = idx;
-                   }
-               }
-           });
-           break;
+          // Lower number = Higher Priority (Unix style) or Higher = Higher?
+          // Let's assume Lower Number = Higher Priority
+          let minPriority = Infinity;
+          next.readyQueue.forEach((pid, idx) => {
+            const p = next.processes.find(proc => proc.id === pid)!;
+            if (p.priority < minPriority) {
+              minPriority = p.priority;
+              selectedId = pid;
+              selectedIndex = idx;
+            } else if (p.priority === minPriority) {
+              // FCFS tie breaker
+              const currentSelected = next.processes.find(proc => proc.id === selectedId)!;
+              if (p.arrivalTime < currentSelected.arrivalTime) {
+                selectedId = pid;
+                selectedIndex = idx;
+              }
+            }
+          });
+          break;
       }
 
       if (selectedId && selectedIndex !== -1) {
         next.currentProcessId = selectedId;
         next.readyQueue.splice(selectedIndex, 1); // Remove from queue
-        
+
         const proc = next.processes.find(p => p.id === selectedId)!;
         proc.state = 'running';
         if (proc.startTime === null) {
@@ -162,11 +162,11 @@ export const stepSimulation = (currentState: SchedulerState, algo: AlgorithmType
   // 4. Advance Time
   // We only stop if all processes are completed
   const allCompleted = next.processes.every(p => p.state === 'completed');
-  
+
   if (!allCompleted) {
-     next.currentTime++;
+    next.currentTime++;
   } else {
-     next.isFinished = true;
+    next.isFinished = true;
   }
 
   return next;
