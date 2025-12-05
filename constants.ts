@@ -1,3 +1,4 @@
+
 import { Language } from './types';
 
 export const PROCESS_COLORS = [
@@ -36,6 +37,7 @@ export const TRANSLATIONS = {
     arrival: 'Arrivo',
     burst: 'Burst',
     priority: 'Priorità',
+    color: 'Colore',
     addProcess: 'Aggiungi Processo',
     noProcesses: 'Nessun processo in coda',
     clearAll: 'Cancella Tutto',
@@ -84,6 +86,7 @@ export const TRANSLATIONS = {
     arrival: 'Arrival',
     burst: 'Burst',
     priority: 'Priority',
+    color: 'Color',
     addProcess: 'Add Process',
     noProcesses: 'No processes in queue',
     clearAll: 'Clear All Processes',

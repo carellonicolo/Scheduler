@@ -1,6 +1,6 @@
 
-import React, { useState, useEffect, useCallback } from 'react';
-import { Play, Pause, RotateCcw, Activity, BrainCircuit, StepForward, Sun, Moon, Layout, X, Plus, Globe, Github, ChevronUp } from 'lucide-react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { Play, Pause, RotateCcw, Activity, BrainCircuit, StepForward, Sun, Moon, Layout, X, Plus, Globe, Github, ChevronUp, Check } from 'lucide-react';
 import { Process, AlgorithmType, SchedulerState, AnalysisReport, Language } from './types';
 import { INITIAL_PROCESSES, ALGORITHMS } from './constants';
 import { stepSimulation, resetSimulation } from './services/schedulerLogic';
@@ -25,6 +25,10 @@ const MainApp: React.FC = () => {
   const [quantum, setQuantum] = useState(2);
   const [simulationSpeed, setSimulationSpeed] = useState(1000); 
   const [isAlgoDropdownOpen, setIsAlgoDropdownOpen] = useState(false);
+  
+  // Ref for positioning the fixed dropdown
+  const algoBtnRef = useRef<HTMLButtonElement>(null);
+  const [dropdownPos, setDropdownPos] = useState({ bottom: 0, left: 0 });
 
   // --- Simulation State ---
   const [schedulerState, setSchedulerState] = useState<SchedulerState>(
@@ -80,6 +84,14 @@ const MainApp: React.FC = () => {
     }
   };
 
+  const handleDeleteProcess = (id: string) => {
+    const updated = baseProcesses.filter(p => p.id !== id);
+    setBaseProcesses(updated);
+    if (schedulerState.currentTime === 0 || schedulerState.isFinished) {
+      setSchedulerState(resetSimulation(updated, quantum));
+    }
+  };
+
   const handleReset = () => {
     setIsPlaying(false);
     setSchedulerState(resetSimulation(baseProcesses, quantum));
@@ -106,11 +118,28 @@ const MainApp: React.FC = () => {
     setSchedulerState(prev => stepSimulation(prev, algorithm));
   }, [algorithm, schedulerState.isFinished]);
 
+  const toggleAlgoDropdown = () => {
+    if (isPlaying && !schedulerState.isFinished) return;
+    
+    if (isAlgoDropdownOpen) {
+      setIsAlgoDropdownOpen(false);
+    } else {
+      if (algoBtnRef.current) {
+        const rect = algoBtnRef.current.getBoundingClientRect();
+        setDropdownPos({
+            bottom: window.innerHeight - rect.top + 12, // slightly above the bar
+            left: rect.left
+        });
+        setIsAlgoDropdownOpen(true);
+      }
+    }
+  };
+
   // --- Effects ---
   useEffect(() => {
-    let interval: number | undefined;
+    let interval: ReturnType<typeof setInterval> | undefined;
     if (isPlaying && !schedulerState.isFinished) {
-      interval = window.setInterval(handleStep, simulationSpeed);
+      interval = setInterval(handleStep, simulationSpeed);
     }
     return () => clearInterval(interval);
   }, [isPlaying, schedulerState.isFinished, handleStep, simulationSpeed]);
@@ -239,6 +268,7 @@ const MainApp: React.FC = () => {
                processes={baseProcesses} 
                onAddProcess={handleAddProcess} 
                onUpdateProcess={handleUpdateProcess}
+               onDeleteProcess={handleDeleteProcess}
                onClear={handleClear}
                disabled={isPlaying && !schedulerState.isFinished} 
              />
@@ -258,6 +288,7 @@ const MainApp: React.FC = () => {
                      processes={baseProcesses} 
                      onAddProcess={(p) => { handleAddProcess(p); setMobileInputOpen(false); }} 
                      onUpdateProcess={handleUpdateProcess}
+                     onDeleteProcess={handleDeleteProcess}
                      onClear={() => { handleClear(); setMobileInputOpen(false); }}
                      disabled={isPlaying && !schedulerState.isFinished} 
                    />
@@ -329,48 +360,29 @@ const MainApp: React.FC = () => {
           <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-2xl border border-white/20 dark:border-slate-700/50 shadow-2xl rounded-2xl p-2.5 flex items-center gap-4 transition-all hover:scale-[1.02] duration-300 max-w-full overflow-x-auto scrollbar-hide">
              
              {/* Algorithm Select - Custom Dropdown */}
-             <div className="relative border-r border-slate-200 dark:border-slate-700 pr-4 mr-2 flex-shrink-0">
+             <div className="flex items-center gap-4 border-r border-slate-200 dark:border-slate-700 pr-4 mr-2 flex-shrink-0">
                 <div className="flex flex-col">
                   <span className="text-[9px] font-bold text-slate-400 uppercase mb-0.5">{t.algorithm}</span>
                   
                   <button 
-                    onClick={() => !isPlaying && setIsAlgoDropdownOpen(!isAlgoDropdownOpen)}
+                    ref={algoBtnRef}
+                    onClick={toggleAlgoDropdown}
                     disabled={isPlaying && !schedulerState.isFinished}
                     className="flex items-center gap-2 text-sm font-bold text-slate-800 dark:text-white outline-none min-w-[140px] justify-between disabled:opacity-50"
                   >
                     <span className="truncate">{t.algoNames[algorithm]}</span>
                     <ChevronUp size={14} className={`transition-transform duration-300 ${isAlgoDropdownOpen ? 'rotate-180' : ''}`} />
                   </button>
-
-                  {/* Dropdown Menu */}
-                  {isAlgoDropdownOpen && (
-                    <>
-                        <div className="fixed inset-0 z-10" onClick={() => setIsAlgoDropdownOpen(false)}></div>
-                        <div className="absolute bottom-full left-0 mb-2 w-64 bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl border border-white/20 dark:border-slate-700/50 rounded-xl shadow-xl z-20 overflow-hidden flex flex-col animate-fade-in-up">
-                            {ALGORITHMS.map(a => (
-                                <button
-                                    key={a.id}
-                                    onClick={() => {
-                                        setAlgorithm(a.id as AlgorithmType);
-                                        setIsAlgoDropdownOpen(false);
-                                    }}
-                                    className={`px-4 py-3 text-left text-xs font-bold hover:bg-indigo-50 dark:hover:bg-indigo-900/30 transition-colors border-b last:border-0 border-slate-100 dark:border-slate-800 ${algorithm === a.id ? 'text-indigo-600 dark:text-indigo-400 bg-indigo-50/50 dark:bg-indigo-900/20' : 'text-slate-600 dark:text-slate-400'}`}
-                                >
-                                    {t.algoNames[a.id as keyof typeof t.algoNames]}
-                                </button>
-                            ))}
-                        </div>
-                    </>
-                  )}
                 </div>
-                
+
+                {/* Quantum Input - Inline */}
                 {algorithm === 'RR' && (
-                  <div className="absolute bottom-full left-0 mb-4 ml-40 bg-white dark:bg-slate-800 p-3 rounded-xl shadow-xl border border-slate-200 dark:border-slate-700 flex flex-col w-32 animate-fade-in-up">
-                      <label className="text-[10px] text-slate-400 font-bold mb-1">{t.timeQuantum}</label>
+                  <div className="flex flex-col w-16 animate-fade-in-left border-l border-slate-200 dark:border-slate-700 pl-4">
+                      <label className="text-[9px] text-slate-400 font-bold mb-0.5 whitespace-nowrap">{t.timeQuantum}</label>
                       <input 
                         type="number" min="1" value={quantum} 
                         onChange={(e) => setQuantum(Number(e.target.value))}
-                        className="w-full bg-slate-100 dark:bg-slate-900 rounded p-1.5 text-xs text-slate-700 dark:text-white outline-none border border-transparent focus:border-indigo-500"
+                        className="w-full bg-slate-100 dark:bg-slate-900 rounded p-1 text-xs text-slate-700 dark:text-white outline-none border border-transparent focus:border-indigo-500 font-mono text-center"
                       />
                   </div>
                 )}
@@ -417,6 +429,49 @@ const MainApp: React.FC = () => {
              </div>
           </div>
        </div>
+
+       {/* --- Fixed Overlays --- */}
+       
+       {/* Algorithm Dropdown - Portaled out of the clipped toolbar */}
+       {isAlgoDropdownOpen && (
+          <>
+            <div className="fixed inset-0 z-50 bg-black/5 backdrop-blur-[1px]" onClick={() => setIsAlgoDropdownOpen(false)}></div>
+            <div 
+                className="fixed z-50 w-80 bg-slate-900/95 backdrop-blur-2xl border border-white/10 rounded-2xl shadow-[0_20px_60px_-15px_rgba(0,0,0,0.5)] overflow-hidden flex flex-col animate-fade-in-up origin-bottom-left"
+                style={{ 
+                    left: dropdownPos.left, 
+                    bottom: dropdownPos.bottom 
+                }}
+            >
+                <div className="p-2 space-y-1">
+                  <div className="px-3 py-2 text-[10px] uppercase tracking-wider font-bold text-slate-500 select-none">
+                    {t.algorithm}
+                  </div>
+                  {ALGORITHMS.map(a => {
+                    const isSelected = algorithm === a.id;
+                    return (
+                      <button
+                          key={a.id}
+                          onClick={() => {
+                              setAlgorithm(a.id as AlgorithmType);
+                              setIsAlgoDropdownOpen(false);
+                          }}
+                          className={`group w-full flex items-center justify-between px-3 py-3 rounded-xl transition-all duration-200 text-xs font-medium
+                            ${isSelected 
+                              ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/20' 
+                              : 'text-slate-400 hover:bg-white/5 hover:text-slate-200'
+                            }
+                          `}
+                      >
+                          <span>{t.algoNames[a.id as keyof typeof t.algoNames]}</span>
+                          {isSelected && <Check size={16} className="text-white animate-fade-in-left" />}
+                      </button>
+                    )
+                  })}
+                </div>
+            </div>
+          </>
+       )}
 
     </div>
   );
