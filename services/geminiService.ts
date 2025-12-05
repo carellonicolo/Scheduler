@@ -8,7 +8,9 @@ export const analyzeSimulation = async (
   language: Language
 ): Promise<string> => {
   try {
-    const apiKey = process.env.API_KEY;
+    // Safely check for process.env.API_KEY to avoid "process is not defined" error in browser
+    const apiKey = (typeof process !== 'undefined' && process.env) ? process.env.API_KEY : undefined;
+
     if (!apiKey) {
         return language === 'IT' 
           ? "API Key mancante. Configurala nelle variabili d'ambiente." 
