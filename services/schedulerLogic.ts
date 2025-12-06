@@ -6,7 +6,7 @@ const cloneState = (state: SchedulerState): SchedulerState => ({
   processes: state.processes.map(p => ({ ...p })),
   readyQueue: [...state.readyQueue],
   completedQueue: [...state.completedQueue],
-  ganttChart: [...state.ganttChart],
+  ganttChart: state.ganttChart.map(block => ({ ...block })), // Deep clone GanttBlocks
 });
 
 export const stepSimulation = (currentState: SchedulerState, algo: AlgorithmType): SchedulerState => {
@@ -37,7 +37,11 @@ export const stepSimulation = (currentState: SchedulerState, algo: AlgorithmType
     // Update Gantt Chart
     const lastBlock = next.ganttChart[next.ganttChart.length - 1];
     if (lastBlock && lastBlock.processId === currentP.id && lastBlock.endTime === currentTime) {
-      lastBlock.endTime++;
+      // Create a new object instead of mutating to maintain immutability
+      next.ganttChart[next.ganttChart.length - 1] = {
+        ...lastBlock,
+        endTime: lastBlock.endTime + 1
+      };
     } else {
       next.ganttChart.push({
         processId: currentP.id,

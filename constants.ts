@@ -2,6 +2,7 @@
 import { Language } from './types.ts';
 
 export const PROCESS_COLORS = [
+  // Primary colors
   '#ef4444', // Red 500
   '#f97316', // Orange 500
   '#eab308', // Yellow 500
@@ -12,6 +13,17 @@ export const PROCESS_COLORS = [
   '#8b5cf6', // Violet 500
   '#d946ef', // Fuchsia 500
   '#f43f5e', // Rose 500
+  // Lighter variants
+  '#fca5a5', // Red 300
+  '#fdba74', // Orange 300
+  '#fde047', // Yellow 300
+  '#86efac', // Green 300
+  '#5eead4', // Teal 300
+  '#67e8f9', // Cyan 300
+  '#93c5fd', // Blue 300
+  '#c4b5fd', // Violet 300
+  '#f0abfc', // Fuchsia 300
+  '#fda4af', // Rose 300
 ];
 
 export const INITIAL_PROCESSES = [
@@ -76,6 +88,18 @@ export const TRANSLATIONS = {
       SRTF: 'Shortest Remaining Time First (Preemptive)',
       RR: 'Round Robin (RR)',
       PRIORITY: 'Priority Scheduling (Non-Preemptive)',
+    },
+    help: {
+      title: 'Guida ai Campi',
+      arrivalTitle: 'Tempo di Arrivo (AT)',
+      arrivalDesc: 'Il momento in cui il processo entra nella coda dei processi pronti. Un valore di 0 significa che il processo è disponibile dall\'inizio.',
+      burstTitle: 'Tempo di Burst (BT)',
+      burstDesc: 'Il tempo totale di CPU richiesto dal processo per completare la sua esecuzione. Valori più alti indicano processi più lunghi.',
+      priorityTitle: 'Priorità (PR)',
+      priorityDesc: 'Il livello di priorità del processo. Valori più bassi indicano priorità più alta (usato solo con l\'algoritmo Priority Scheduling).',
+      howTo: 'Come Aggiungere un Processo',
+      howToDesc: 'Inserisci i valori nei campi sopra, scegli un colore e clicca "Aggiungi Processo". Puoi modificare i valori anche dopo la creazione.',
+      close: 'Chiudi'
     }
   },
   EN: {
@@ -125,6 +149,18 @@ export const TRANSLATIONS = {
       SRTF: 'Shortest Remaining Time First (Preemptive)',
       RR: 'Round Robin (RR)',
       PRIORITY: 'Priority Scheduling (Non-Preemptive)',
+    },
+    help: {
+      title: 'Field Guide',
+      arrivalTitle: 'Arrival Time (AT)',
+      arrivalDesc: 'The time when the process enters the ready queue. A value of 0 means the process is available from the start.',
+      burstTitle: 'Burst Time (BT)',
+      burstDesc: 'The total CPU time required by the process to complete its execution. Higher values indicate longer processes.',
+      priorityTitle: 'Priority (PR)',
+      priorityDesc: 'The priority level of the process. Lower values indicate higher priority (only used with Priority Scheduling algorithm).',
+      howTo: 'How to Add a Process',
+      howToDesc: 'Enter values in the fields above, choose a color, and click "Add Process". You can modify values after creation.',
+      close: 'Close'
     }
   }
 };

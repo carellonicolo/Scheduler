@@ -263,7 +263,7 @@ const MainApp: React.FC = () => {
       <main className="relative pt-28 pb-32 px-4 h-screen flex gap-6 overflow-hidden z-10">
 
         {/* Left: Input Panel (Desktop) */}
-        <div className="w-80 flex-shrink-0 hidden lg:flex flex-col gap-4 animate-fade-in-left">
+        <div className="w-96 flex-shrink-0 hidden lg:flex flex-col gap-4 animate-fade-in-left">
           <ProcessForm
             processes={baseProcesses}
             onAddProcess={handleAddProcess}

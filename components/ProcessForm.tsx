@@ -1,6 +1,6 @@
 
-import React, { useState } from 'react';
-import { Plus, Trash2, List, X, Check } from 'lucide-react';
+import React, { useState, useRef } from 'react';
+import { Plus, Trash2, List, X, Check, ChevronDown, ChevronUp, HelpCircle, Clock, Cpu, Flag } from 'lucide-react';
 import { PROCESS_COLORS } from '../constants.ts';
 import { Process } from '../types.ts';
 import { useLanguage } from '../contexts/LanguageContext.tsx';
@@ -14,8 +14,37 @@ interface ProcessFormProps {
   disabled: boolean;
 }
 
-// Reusable component for the compact inputs in the list
-const CompactStatInput = ({
+// Compact inline input for form with full label
+const MiniInput = ({
+  label,
+  value,
+  min,
+  onChange,
+  disabled,
+  width = 'w-16'
+}: {
+  label: string,
+  value: number,
+  min: number,
+  onChange: (val: string) => void,
+  disabled: boolean,
+  width?: string
+}) => (
+  <div className={`flex flex-col ${width}`}>
+    <span className="text-[8px] text-slate-400 font-bold uppercase truncate mb-0.5">{label}</span>
+    <input
+      type="number"
+      min={min}
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      disabled={disabled}
+      className="w-full bg-slate-100 dark:bg-slate-800 rounded px-1.5 py-1 text-xs font-mono text-slate-700 dark:text-slate-200 outline-none border border-transparent focus:border-indigo-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+    />
+  </div>
+);
+
+// Vertical spinner input with stacked arrows
+const VerticalSpinnerInput = ({
   label,
   value,
   min,
@@ -25,21 +54,166 @@ const CompactStatInput = ({
   label: string,
   value: number,
   min: number,
-  onChange: (val: string) => void,
+  onChange: (val: number) => void,
   disabled: boolean
 }) => {
+  const increment = () => onChange(value + 1);
+  const decrement = () => { if (value > min) onChange(value - 1); };
+
   return (
-    <div className="relative flex flex-col bg-slate-50 dark:bg-slate-900/50 hover:bg-white dark:hover:bg-slate-900 rounded-lg p-1.5 border border-transparent hover:border-slate-200 dark:hover:border-slate-700 focus-within:bg-white dark:focus-within:bg-slate-900 focus-within:border-indigo-500/50 focus-within:ring-2 focus-within:ring-indigo-500/20 transition-all group/input cursor-text"
-      onClick={(e) => e.currentTarget.querySelector('input')?.focus()}>
-      <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider px-1 group-focus-within/input:text-indigo-500 transition-colors select-none">{label}</span>
+    <div className="flex items-center bg-slate-100 dark:bg-slate-700 rounded px-1.5 py-0.5 gap-1">
+      <span className="text-[8px] text-slate-400 font-bold shrink-0 w-5">{label}</span>
       <input
         type="number"
         min={min}
         value={value}
-        onChange={(e) => onChange(e.target.value)}
+        onChange={(e) => {
+          const val = parseInt(e.target.value);
+          if (!isNaN(val) && val >= min) onChange(val);
+        }}
         disabled={disabled}
-        className="w-full bg-transparent outline-none font-mono text-xs sm:text-sm font-bold text-slate-700 dark:text-slate-200 px-1 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+        className="w-6 bg-transparent text-[11px] font-mono font-bold text-slate-600 dark:text-slate-300 outline-none text-center [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
       />
+      {/* Stacked arrows */}
+      <div className="flex flex-col -my-0.5">
+        <button
+          type="button"
+          onClick={increment}
+          disabled={disabled}
+          className="text-slate-400 hover:text-indigo-500 disabled:opacity-30 transition-colors leading-none"
+        >
+          <ChevronUp size={10} />
+        </button>
+        <button
+          type="button"
+          onClick={decrement}
+          disabled={disabled || value <= min}
+          className="text-slate-400 hover:text-indigo-500 disabled:opacity-30 transition-colors leading-none"
+        >
+          <ChevronDown size={10} />
+        </button>
+      </div>
+    </div>
+  );
+};
+
+// Color picker dropdown for process list
+const ProcessColorPicker = ({
+  currentColor,
+  onChange,
+  disabled
+}: {
+  currentColor: string,
+  onChange: (color: string) => void,
+  disabled: boolean
+}) => {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <div className="relative">
+      <button
+        type="button"
+        onClick={() => !disabled && setOpen(!open)}
+        disabled={disabled}
+        className="w-4 h-4 rounded-full shrink-0 shadow-sm hover:scale-110 transition-transform border border-white/50 dark:border-slate-600"
+        style={{ backgroundColor: currentColor }}
+      />
+      {open && (
+        <>
+          <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
+          <div className="absolute left-0 top-full mt-1 z-20 bg-white dark:bg-slate-800 rounded-lg p-2 shadow-xl border border-slate-200 dark:border-slate-700 grid grid-cols-5 gap-1 min-w-[100px]">
+            {PROCESS_COLORS.map((c) => (
+              <button
+                key={c}
+                type="button"
+                onClick={() => { onChange(c); setOpen(false); }}
+                style={{ backgroundColor: c }}
+                className={`w-4 h-4 rounded-full transition-transform hover:scale-110 ${currentColor === c ? 'ring-2 ring-offset-1 ring-indigo-400 dark:ring-offset-slate-800' : ''}`}
+              >
+                {currentColor === c && <Check size={8} className="text-white drop-shadow mx-auto" />}
+              </button>
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  );
+};
+
+// Help Modal Component
+const HelpModal = ({ onClose }: { onClose: () => void }) => {
+  const { t } = useLanguage();
+  const help = (t as any).help;
+
+  return (
+    <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in-up">
+      <div className="bg-white dark:bg-slate-900 w-full max-w-md rounded-2xl shadow-2xl border border-white/20 dark:border-slate-700/50 overflow-hidden">
+        {/* Header */}
+        <div className="bg-gradient-to-r from-indigo-500 to-purple-600 px-5 py-4 flex items-center justify-between">
+          <h3 className="text-white font-bold flex items-center gap-2">
+            <HelpCircle size={18} />
+            {help.title}
+          </h3>
+          <button onClick={onClose} className="text-white/80 hover:text-white transition-colors">
+            <X size={18} />
+          </button>
+        </div>
+
+        {/* Content */}
+        <div className="p-5 space-y-4 max-h-[60vh] overflow-y-auto">
+          {/* Arrival Time */}
+          <div className="flex gap-3">
+            <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg shrink-0">
+              <Clock size={18} className="text-blue-500" />
+            </div>
+            <div>
+              <h4 className="font-bold text-sm text-slate-800 dark:text-white">{help.arrivalTitle}</h4>
+              <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">{help.arrivalDesc}</p>
+            </div>
+          </div>
+
+          {/* Burst Time */}
+          <div className="flex gap-3">
+            <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-lg shrink-0">
+              <Cpu size={18} className="text-green-500" />
+            </div>
+            <div>
+              <h4 className="font-bold text-sm text-slate-800 dark:text-white">{help.burstTitle}</h4>
+              <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">{help.burstDesc}</p>
+            </div>
+          </div>
+
+          {/* Priority */}
+          <div className="flex gap-3">
+            <div className="p-2 bg-amber-100 dark:bg-amber-900/30 rounded-lg shrink-0">
+              <Flag size={18} className="text-amber-500" />
+            </div>
+            <div>
+              <h4 className="font-bold text-sm text-slate-800 dark:text-white">{help.priorityTitle}</h4>
+              <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">{help.priorityDesc}</p>
+            </div>
+          </div>
+
+          {/* Divider */}
+          <div className="h-px bg-gradient-to-r from-transparent via-slate-200 dark:via-slate-700 to-transparent" />
+
+          {/* How to */}
+          <div className="bg-indigo-50 dark:bg-indigo-900/20 rounded-xl p-4 border border-indigo-100 dark:border-indigo-800/50">
+            <h4 className="font-bold text-sm text-indigo-700 dark:text-indigo-300 mb-1">{help.howTo}</h4>
+            <p className="text-xs text-indigo-600/80 dark:text-indigo-400/80 leading-relaxed">{help.howToDesc}</p>
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="px-5 py-3 bg-slate-50 dark:bg-slate-800/50 border-t border-slate-100 dark:border-slate-800">
+          <button
+            onClick={onClose}
+            className="w-full bg-indigo-600 hover:bg-indigo-500 text-white py-2 px-4 rounded-lg font-medium text-sm transition-colors"
+          >
+            {help.close}
+          </button>
+        </div>
+      </div>
     </div>
   );
 };
@@ -48,8 +222,10 @@ export const ProcessForm: React.FC<ProcessFormProps> = ({ processes, onAddProces
   const [arrivalTime, setArrivalTime] = useState(0);
   const [burstTime, setBurstTime] = useState(1);
   const [priority, setPriority] = useState(1);
-  // Pick the next available color based on current count, or default to first
   const [selectedColor, setSelectedColor] = useState(PROCESS_COLORS[processes.length % PROCESS_COLORS.length]);
+  const [colorPickerOpen, setColorPickerOpen] = useState(false);
+  const [helpOpen, setHelpOpen] = useState(false);
+  const colorBtnRef = useRef<HTMLButtonElement>(null);
 
   const { t } = useLanguage();
 
@@ -62,177 +238,185 @@ export const ProcessForm: React.FC<ProcessFormProps> = ({ processes, onAddProces
       color: selectedColor
     });
 
-    // Auto-select next color in the list for better UX
     const nextColorIdx = (PROCESS_COLORS.indexOf(selectedColor) + 1) % PROCESS_COLORS.length;
     setSelectedColor(PROCESS_COLORS[nextColorIdx]);
-
-    // Optional: Increment arrival time for convenience
     setArrivalTime(prev => prev + 1);
   };
 
-  const handleUpdateNum = (id: string, field: keyof Process, valStr: string, min: number) => {
-    if (valStr === '') return; // Prevent empty state for now or handle appropriately
-    const val = parseInt(valStr);
-    if (!isNaN(val) && val >= min) {
-      onUpdateProcess(id, { [field]: val });
-    }
-  };
-
   return (
-    <div className="bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl border border-white/20 dark:border-slate-700/30 shadow-xl rounded-2xl p-5 flex flex-col gap-6 transition-all duration-300 h-full max-h-[calc(100vh-8rem)]">
-      {/* Header */}
-      <div className="flex items-center justify-between flex-shrink-0">
-        <h2 className="text-sm font-bold text-slate-800 dark:text-white uppercase tracking-wider flex items-center gap-2">
-          <List size={16} className="text-indigo-500" /> {t.processInput}
+    <div className="bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl border border-white/20 dark:border-slate-700/30 shadow-xl rounded-2xl p-3 flex flex-col gap-3 transition-all duration-300 h-full max-h-[calc(100vh-8rem)]">
+      {/* Header - with Help Button */}
+      <div className="flex items-center justify-between shrink-0">
+        <h2 className="text-xs font-bold text-slate-800 dark:text-white uppercase tracking-wider flex items-center gap-1.5">
+          <List size={14} className="text-indigo-500" /> {t.processInput}
         </h2>
-        <span className="text-xs font-mono bg-indigo-100 dark:bg-indigo-900/50 text-indigo-600 dark:text-indigo-300 px-2 py-0.5 rounded-full border border-indigo-200 dark:border-indigo-800 shadow-sm">
-          {processes.length} {t.active}
-        </span>
+        <button
+          onClick={() => setHelpOpen(true)}
+          className="p-1 text-slate-400 hover:text-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 rounded-lg transition-colors"
+          title="Help"
+        >
+          <HelpCircle size={14} />
+        </button>
       </div>
 
-      {/* Add Process Form */}
-      <form onSubmit={handleSubmit} className="flex flex-col gap-4 flex-shrink-0">
-        <div className="grid grid-cols-3 gap-3">
-          <div className="space-y-1">
-            <label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide pl-1">{t.arrival}</label>
-            <input
-              type="number"
-              min="0"
-              value={arrivalTime}
-              onChange={(e) => setArrivalTime(parseInt(e.target.value) || 0)}
-              disabled={disabled}
-              className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-2.5 text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500/50 outline-none transition-all placeholder:text-slate-400 font-mono [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-            />
-          </div>
+      {/* Add Process Form - Single Inline Row with Full Labels */}
+      <form onSubmit={handleSubmit} className="flex items-end gap-2 shrink-0 flex-wrap">
+        <MiniInput
+          label={t.arrival}
+          value={arrivalTime}
+          min={0}
+          disabled={disabled}
+          onChange={(val) => setArrivalTime(parseInt(val) || 0)}
+          width="w-16"
+        />
+        <MiniInput
+          label={t.burst}
+          value={burstTime}
+          min={1}
+          disabled={disabled}
+          onChange={(val) => setBurstTime(parseInt(val) || 1)}
+          width="w-16"
+        />
+        <MiniInput
+          label={t.priority}
+          value={priority}
+          min={1}
+          disabled={disabled}
+          onChange={(val) => setPriority(parseInt(val) || 1)}
+          width="w-16"
+        />
 
-          <div className="space-y-1">
-            <label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide pl-1">{t.burst}</label>
-            <input
-              type="number"
-              min="1"
-              value={burstTime}
-              onChange={(e) => setBurstTime(parseInt(e.target.value) || 1)}
-              disabled={disabled}
-              className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-2.5 text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500/50 outline-none transition-all placeholder:text-slate-400 font-mono [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-            />
-          </div>
+        {/* Compact Color Picker */}
+        <div className="relative pb-1">
+          <button
+            ref={colorBtnRef}
+            type="button"
+            onClick={() => setColorPickerOpen(!colorPickerOpen)}
+            disabled={disabled}
+            className="w-6 h-6 rounded-full border-2 border-white dark:border-slate-700 shadow-sm hover:scale-110 transition-transform flex items-center justify-center"
+            style={{ backgroundColor: selectedColor }}
+          >
+            <ChevronDown size={10} className="text-white drop-shadow" />
+          </button>
 
-          <div className="space-y-1">
-            <label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide pl-1">{t.priority}</label>
-            <input
-              type="number"
-              min="1"
-              value={priority}
-              onChange={(e) => setPriority(parseInt(e.target.value) || 1)}
-              disabled={disabled}
-              className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-2.5 text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500/50 outline-none transition-all placeholder:text-slate-400 font-mono [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-            />
-          </div>
+          {colorPickerOpen && (
+            <>
+              <div className="fixed inset-0 z-10" onClick={() => setColorPickerOpen(false)} />
+              <div className="absolute left-0 top-full mt-1 z-20 bg-white dark:bg-slate-800 rounded-lg p-2 shadow-xl border border-slate-200 dark:border-slate-700 grid grid-cols-5 gap-1.5 min-w-[120px]">
+                {PROCESS_COLORS.map((c) => (
+                  <button
+                    key={c}
+                    type="button"
+                    onClick={() => { setSelectedColor(c); setColorPickerOpen(false); }}
+                    style={{ backgroundColor: c }}
+                    className={`w-5 h-5 rounded-full transition-transform hover:scale-110 ${selectedColor === c ? 'ring-2 ring-offset-1 ring-slate-400 dark:ring-offset-slate-800' : ''}`}
+                  >
+                    {selectedColor === c && <Check size={10} className="text-white drop-shadow mx-auto" />}
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
         </div>
 
-        {/* Color Picker */}
-        <div className="space-y-1.5">
-          <label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide pl-1">{t.color}</label>
-          <div className="flex flex-wrap gap-2 p-2 bg-slate-50 dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700">
-            {PROCESS_COLORS.map((c) => (
-              <button
-                key={c}
-                type="button"
-                onClick={() => setSelectedColor(c)}
-                disabled={disabled}
-                style={{ backgroundColor: c }}
-                className={`w-5 h-5 rounded-full flex items-center justify-center transition-transform hover:scale-110 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-indigo-400 dark:focus:ring-offset-slate-900 ${selectedColor === c ? 'scale-110 ring-2 ring-offset-1 ring-slate-400 dark:ring-offset-slate-900' : 'opacity-80 hover:opacity-100'}`}
-              >
-                {selectedColor === c && <Check size={12} className="text-white drop-shadow-md stroke-[3]" />}
-              </button>
-            ))}
-          </div>
-        </div>
-
+        {/* Compact Add Button */}
         <button
           type="submit"
           disabled={disabled}
-          className="w-full flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-500 disabled:bg-slate-400 disabled:dark:bg-slate-700 text-white p-3 rounded-xl font-medium shadow-lg shadow-indigo-500/20 hover:shadow-indigo-500/40 transition-all active:scale-95 border border-white/10"
+          className="flex items-center gap-1 bg-indigo-600 hover:bg-indigo-500 disabled:bg-slate-400 text-white px-3 py-1.5 rounded-lg font-medium shadow-md hover:shadow-lg transition-all active:scale-95 text-xs ml-auto"
         >
-          <Plus size={18} />
-          <span className="text-sm">{t.addProcess}</span>
+          <Plus size={14} />
+          <span className="hidden sm:inline">{t.addProcess}</span>
         </button>
       </form>
 
-      {/* Separator */}
-      <div className="h-px bg-gradient-to-r from-transparent via-slate-200 dark:via-slate-700 to-transparent flex-shrink-0"></div>
+      {/* Process Counter - Above the list */}
+      <div className="flex items-center gap-2 px-1 shrink-0">
+        <span className="text-[10px] text-slate-400 font-medium">{t.active}:</span>
+        <span className="text-[10px] font-mono bg-indigo-100 dark:bg-indigo-900/50 text-indigo-600 dark:text-indigo-300 px-1.5 py-0.5 rounded border border-indigo-200 dark:border-indigo-800">
+          {processes.length}
+        </span>
+      </div>
 
-      {/* Scrollable List */}
-      <div className="flex-1 overflow-y-auto pr-1 space-y-3 scrollbar-hide min-h-0 bg-slate-50/50 dark:bg-slate-800/20 rounded-xl p-2 border border-slate-100 dark:border-slate-700/50 shadow-inner">
+      {/* Scrollable Process List - Compact Cards with Editable Colors and Vertical Spinners */}
+      <div className="flex-1 overflow-y-auto space-y-1.5 scrollbar-hide min-h-0 bg-slate-50/50 dark:bg-slate-800/20 rounded-lg p-1.5 border border-slate-100 dark:border-slate-700/50">
         {processes.map((p) => (
-          <div key={p.id} className="group flex flex-col p-3 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md transition-all gap-3 hover:border-indigo-200 dark:hover:border-indigo-900/50">
+          <div
+            key={p.id}
+            className="flex items-center gap-2 px-2 py-1.5 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-indigo-300 dark:hover:border-indigo-800 transition-all"
+          >
+            {/* Color dot - editable */}
+            <ProcessColorPicker
+              currentColor={p.color}
+              onChange={(color) => onUpdateProcess(p.id, { color })}
+              disabled={disabled}
+            />
 
-            {/* Row 1: Header */}
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2 flex-1">
-                <div className="w-3 h-3 flex-shrink-0 rounded-full shadow-sm ring-2 ring-white dark:ring-slate-700" style={{ backgroundColor: p.color }} />
-                <input
-                  type="text"
-                  value={p.name}
-                  onChange={(e) => onUpdateProcess(p.id, { name: e.target.value })}
-                  disabled={disabled}
-                  className="w-full bg-transparent text-sm font-bold text-slate-700 dark:text-slate-200 border-b border-transparent focus:border-indigo-500 outline-none hover:border-slate-300 dark:hover:border-slate-600 transition-colors p-0.5 truncate"
-                />
-              </div>
-              <button
-                onClick={() => onDeleteProcess(p.id)}
-                disabled={disabled}
-                className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-all opacity-100 sm:opacity-0 group-hover:opacity-100"
-                title="Remove Process"
-              >
-                <X size={14} />
-              </button>
-            </div>
+            {/* Process name - editable inline */}
+            <input
+              type="text"
+              value={p.name}
+              onChange={(e) => onUpdateProcess(p.id, { name: e.target.value })}
+              disabled={disabled}
+              className="w-8 bg-transparent text-xs font-bold text-slate-700 dark:text-slate-200 border-b border-transparent focus:border-indigo-500 outline-none truncate shrink-0"
+            />
 
-            {/* Row 2: Stats Grid */}
-            <div className="grid grid-cols-3 gap-2">
-              <CompactStatInput
+            {/* Stats with vertical spinner controls - no horizontal scroll */}
+            <div className="flex items-center gap-1.5 flex-1">
+              <VerticalSpinnerInput
                 label="AT"
                 value={p.arrivalTime}
                 min={0}
                 disabled={disabled}
-                onChange={(val) => handleUpdateNum(p.id, 'arrivalTime', val, 0)}
+                onChange={(val) => onUpdateProcess(p.id, { arrivalTime: val })}
               />
-              <CompactStatInput
+              <VerticalSpinnerInput
                 label="BT"
                 value={p.burstTime}
                 min={1}
                 disabled={disabled}
-                onChange={(val) => handleUpdateNum(p.id, 'burstTime', val, 1)}
+                onChange={(val) => onUpdateProcess(p.id, { burstTime: val, remainingTime: val })}
               />
-              <CompactStatInput
+              <VerticalSpinnerInput
                 label="PR"
                 value={p.priority}
                 min={1}
                 disabled={disabled}
-                onChange={(val) => handleUpdateNum(p.id, 'priority', val, 1)}
+                onChange={(val) => onUpdateProcess(p.id, { priority: val })}
               />
             </div>
+
+            {/* Delete button - Always visible red trash */}
+            <button
+              onClick={() => onDeleteProcess(p.id)}
+              disabled={disabled}
+              className="p-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-all shrink-0"
+              title="Remove"
+            >
+              <Trash2 size={14} />
+            </button>
           </div>
         ))}
 
         {processes.length === 0 && (
-          <div className="h-full flex flex-col items-center justify-center text-slate-400 text-xs italic gap-3 min-h-[120px] opacity-60">
-            <div className="p-3 bg-slate-100 dark:bg-slate-800 rounded-full">
-              <List size={20} />
-            </div>
+          <div className="h-full flex flex-col items-center justify-center text-slate-400 text-[10px] italic gap-2 min-h-[80px] opacity-60">
+            <List size={16} />
             <span>{t.noProcesses}</span>
           </div>
         )}
       </div>
 
+      {/* Clear All - Compact */}
       <button
         onClick={onClear}
         disabled={disabled || processes.length === 0}
-        className="mt-auto flex items-center justify-center gap-2 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 p-2.5 rounded-xl text-xs font-medium transition-colors border border-transparent hover:border-red-100 dark:hover:border-red-900/30 flex-shrink-0 disabled:opacity-50 disabled:pointer-events-none"
+        className="flex items-center justify-center gap-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 p-1.5 rounded-lg text-[10px] font-medium transition-colors border border-transparent hover:border-red-100 dark:hover:border-red-900/30 shrink-0 disabled:opacity-50 disabled:pointer-events-none"
       >
-        <Trash2 size={14} /> {t.clearAll}
+        <Trash2 size={12} /> {t.clearAll}
       </button>
+
+      {/* Help Modal */}
+      {helpOpen && <HelpModal onClose={() => setHelpOpen(false)} />}
     </div>
   );
 };
