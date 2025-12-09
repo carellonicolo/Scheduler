@@ -15,6 +15,10 @@ const LanguageContext = createContext<LanguageContextType | undefined>(undefined
 export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [language, setLanguage] = useState<Language>('IT');
 
+  React.useEffect(() => {
+    document.documentElement.lang = language.toLowerCase();
+  }, [language]);
+
   const value = {
     language,
     setLanguage,

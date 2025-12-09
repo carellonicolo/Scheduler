@@ -43,7 +43,7 @@ export const ALGORITHMS = [
 export const TRANSLATIONS = {
   IT: {
     title: 'Simulatore Scheduler CPU',
-    subtitle: 'Visualizzatore Algoritmi',
+    subtitle: 'Powered by Prof. Carello',
     processInput: 'Input Processi',
     active: 'Attivi',
     arrival: 'Arrivo',
@@ -100,11 +100,18 @@ export const TRANSLATIONS = {
       howTo: 'Come Aggiungere un Processo',
       howToDesc: 'Inserisci i valori nei campi sopra, scegli un colore e clicca "Aggiungi Processo". Puoi modificare i valori anche dopo la creazione.',
       close: 'Chiudi'
+    },
+    algoInfo: {
+      FCFS: 'First Come First Serve (FCFS) è l\'algoritmo di scheduling più semplice. I processi vengono eseguiti nell\'ordine esatto in cui arrivano nella coda dei processi pronti (Ready Queue). È un approccio "non-preemptive", il che significa che una volta che un processo inizia l\'esecuzione, continua fino al termine senza interruzioni. Sebbene semplice, può portare al "fenomeno del convoglio" dove processi brevi aspettano a lungo dietro a processi lunghi.',
+      SJF: 'Shortest Job First (SJF) seleziona il processo con il tempo di esecuzione (Burst Time) più breve. Se due processi hanno lo stesso burst time, viene usato FCFS per rompere la parità. Questo algoritmo minimizza il tempo di attesa medio, ma richiede di conoscere in anticipo la durata dei processi. È "non-preemptive".',
+      SRTF: 'Shortest Remaining Time First (SRTF) è la versione "preemptive" di SJF. Se arriva un nuovo processo con un tempo di esecuzione residuo inferiore a quello del processo attualmente in esecuzione, il processo corrente viene interrotto e la CPU viene assegnata al nuovo arrivato. È ottimale per minimizzare il tempo di attesa medio.',
+      RR: 'Round Robin (RR) è progettato per sistemi time-sharing. A ogni processo viene assegnata una piccola unità di tempo chiamata "Quantum". La CPU cicla attraverso i processi pronti. Se un processo non termina entro il suo quantum, viene interrotto e rimesso in coda. Garantisce che nessun processo monopolizzi la CPU e offre una buona risposta interattiva.',
+      PRIORITY: 'Priority Scheduling assegna la CPU al processo con la priorità più alta (nel nostro caso, il numero più basso indica priorità più alta). Se due processi hanno la stessa priorità, vengono eseguiti in ordine FCFS. Attenzione: i processi a bassa priorità potrebbero soffrire di "starvation" (non venire mai eseguiti) se continuano ad arrivare processi ad alta priorità.'
     }
   },
   EN: {
     title: 'CPU Scheduler',
-    subtitle: 'Algorithm Visualizer',
+    subtitle: 'Powered by Prof. Carello',
     processInput: 'Process Input',
     active: 'Active',
     arrival: 'Arrival',
@@ -161,6 +168,13 @@ export const TRANSLATIONS = {
       howTo: 'How to Add a Process',
       howToDesc: 'Enter values in the fields above, choose a color, and click "Add Process". You can modify values after creation.',
       close: 'Close'
+    },
+    algoInfo: {
+      FCFS: 'First Come First Serve (FCFS) is the simplest scheduling algorithm. Processes are executed in the exact order they arrive in the Ready Queue. It is a "non-preemptive" approach, meaning once a process starts execution, it runs to completion without interruption. While simple, it can lead to the "convoy effect" where short processes wait a long time behind long processes.',
+      SJF: 'Shortest Job First (SJF) selects the process with the shortest execution time (Burst Time). If two processes have the same burst time, FCFS is used to break the tie. This algorithm minimizes the average waiting time but requires knowing the process duration in advance. It is "non-preemptive".',
+      SRTF: 'Shortest Remaining Time First (SRTF) is the "preemptive" version of SJF. If a new process arrives with a remaining execution time shorter than the current running process, the current process is interrupted and the CPU is assigned to the newcomer. It is optimal for minimizing average waiting time.',
+      RR: 'Round Robin (RR) is designed for time-sharing systems. Each process is assigned a small unit of time called a "Quantum". The CPU cycles through the ready processes. If a process does not finish within its quantum, it is interrupted and placed back in the queue. It ensures no process monopolizes the CPU and provides good interactive response.',
+      PRIORITY: 'Priority Scheduling assigns the CPU to the process with the highest priority (in our case, lower number indicates higher priority). If two processes have the same priority, they are executed in FCFS order. Warning: low-priority processes may suffer from "starvation" (never executing) if high-priority processes keep arriving.'
     }
   }
 };

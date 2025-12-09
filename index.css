@@ -33,13 +33,18 @@
     scrollbar-width: none;
 }
 
-/* Grid Pattern */
-.bg-grid-pattern {
-  background-image: radial-gradient(rgba(148, 163, 184, 0.3) 1px, transparent 1px);
-  background-size: 24px 24px;
+/* Abstract Wallpaper Background */
+.app-background {
+  background-image: url('/background-light.png');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+  opacity: 0.4;
 }
-.dark .bg-grid-pattern {
-  background-image: radial-gradient(rgba(148, 163, 184, 0.1) 1px, transparent 1px);
+.dark .app-background {
+  background-image: url('/background-dark.png');
+  opacity: 0.5;
 }
 
 .mask-linear-fade {

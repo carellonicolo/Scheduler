@@ -49,75 +49,78 @@ export const Visualizer: React.FC<VisualizerProps> = ({
         {/* CPU Box */}
         <div className="md:col-span-5 relative group">
           <div className={`absolute inset-0 bg-indigo-500/20 dark:bg-indigo-500/10 blur-xl rounded-3xl transition-opacity duration-700 ${currentProcess ? 'opacity-100' : 'opacity-0'}`}></div>
-          <div className="relative bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl border border-white/20 dark:border-slate-700/30 shadow-xl rounded-3xl p-6 flex flex-col items-center justify-center min-h-[280px] transition-all duration-300">
-            <div className="absolute top-5 left-5 flex items-center gap-2">
+          <div className="relative bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl border border-white/20 dark:border-slate-700/30 shadow-xl rounded-3xl p-6 flex flex-col min-h-[280px] transition-all duration-300">
+            <div className="w-full flex items-center gap-2 mb-4">
               <div className="p-1.5 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg">
                 <Cpu size={18} className="text-indigo-600 dark:text-indigo-400" />
               </div>
               <h3 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">{t.cpuCore}</h3>
             </div>
 
-            <div className={`relative z-10 transition-all duration-500 ${currentProcess ? 'scale-100' : 'scale-95 opacity-60 grayscale'}`}>
+            <div className="flex-1 flex flex-col items-center justify-center w-full">
 
-              {/* Radial Progress Container */}
-              <div className="relative flex items-center justify-center">
-                {/* Background Circle */}
-                {currentProcess && (
-                  <svg height={radius * 2.4} width={radius * 2.4} className="absolute rotate-[-90deg]">
-                    <circle
-                      stroke="rgba(99, 102, 241, 0.1)"
-                      strokeWidth={stroke}
-                      fill="transparent"
-                      r={normalizedRadius}
-                      cx={radius * 1.2}
-                      cy={radius * 1.2}
-                    />
-                    <circle
-                      stroke={currentProcess.color}
-                      strokeWidth={stroke}
-                      strokeDasharray={circumference + ' ' + circumference}
-                      style={{ strokeDashoffset, transition: 'stroke-dashoffset 0.5s ease-in-out' }}
-                      strokeLinecap="round"
-                      fill="transparent"
-                      r={normalizedRadius}
-                      cx={radius * 1.2}
-                      cy={radius * 1.2}
-                    />
-                  </svg>
-                )}
+              <div className={`relative z-10 transition-all duration-500 ${currentProcess ? 'scale-100' : 'scale-95 opacity-60 grayscale'}`}>
 
-                <div className={`w-24 h-24 rounded-2xl flex items-center justify-center shadow-lg transition-all duration-300 z-10`}
-                  style={{
-                    backgroundColor: currentProcess ? currentProcess.color : 'transparent',
-                    boxShadow: currentProcess ? `0 10px 40px -10px ${currentProcess.color}80` : 'none',
-                    border: currentProcess ? 'none' : '2px dashed #cbd5e1'
-                  }}
-                >
-                  {currentProcess ? (
-                    <div className="flex flex-col items-center">
-                      <span className="text-3xl font-black text-white drop-shadow-md">{currentProcess.name}</span>
-                    </div>
-                  ) : (
-                    <Cpu size={40} className="text-slate-300 dark:text-slate-600" />
+                {/* Radial Progress Container */}
+                <div className="relative flex items-center justify-center">
+                  {/* Background Circle */}
+                  {currentProcess && (
+                    <svg height={radius * 2.4} width={radius * 2.4} className="absolute rotate-[-90deg]">
+                      <circle
+                        stroke="rgba(99, 102, 241, 0.1)"
+                        strokeWidth={stroke}
+                        fill="transparent"
+                        r={normalizedRadius}
+                        cx={radius * 1.2}
+                        cy={radius * 1.2}
+                      />
+                      <circle
+                        stroke={currentProcess.color}
+                        strokeWidth={stroke}
+                        strokeDasharray={circumference + ' ' + circumference}
+                        style={{ strokeDashoffset, transition: 'stroke-dashoffset 0.5s ease-in-out' }}
+                        strokeLinecap="round"
+                        fill="transparent"
+                        r={normalizedRadius}
+                        cx={radius * 1.2}
+                        cy={radius * 1.2}
+                      />
+                    </svg>
                   )}
-                </div>
-              </div>
-            </div>
 
-            <div className="mt-8 text-center h-12 flex flex-col justify-center">
-              {currentProcess ? (
-                <div className="inline-flex flex-col items-center animate-fade-in-up">
-                  <span className="text-base font-bold text-slate-800 dark:text-white">{t.processing} {currentProcess.name}</span>
-                  <div className="flex items-center gap-2 mt-1">
-                    <span className="text-xs font-mono text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-md">{t.rem}: {currentProcess.remainingTime}ms</span>
-                    <span className="text-[10px] text-slate-400 font-bold uppercase">{t.priority}: {currentProcess.priority}</span>
+                  <div className={`w-24 h-24 rounded-2xl flex items-center justify-center shadow-lg transition-all duration-300 z-10`}
+                    style={{
+                      backgroundColor: currentProcess ? currentProcess.color : 'transparent',
+                      boxShadow: currentProcess ? `0 10px 40px -10px ${currentProcess.color}80` : 'none',
+                      border: currentProcess ? 'none' : '2px dashed #cbd5e1'
+                    }}
+                  >
+                    {currentProcess ? (
+                      <div className="flex flex-col items-center">
+                        <span className="text-3xl font-black text-white drop-shadow-md">{currentProcess.name}</span>
+                      </div>
+                    ) : (
+                      <Cpu size={40} className="text-slate-300 dark:text-slate-600" />
+                    )}
                   </div>
                 </div>
-              ) : (
-                <div className="flex flex-col items-center gap-1">
-                  <span className="text-sm font-medium text-slate-400 dark:text-slate-500 italic">{t.waitingForProcess}</span>
-                </div>
-              )}
+              </div>
+
+              <div className="mt-8 text-center h-12 flex flex-col justify-center">
+                {currentProcess ? (
+                  <div className="inline-flex flex-col items-center animate-fade-in-up">
+                    <span className="text-base font-bold text-slate-800 dark:text-white">{t.processing} {currentProcess.name}</span>
+                    <div className="flex items-center gap-2 mt-1">
+                      <span className="text-xs font-mono text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-md">{t.rem}: {currentProcess.remainingTime}ms</span>
+                      <span className="text-[10px] text-slate-400 font-bold uppercase">{t.priority}: {currentProcess.priority}</span>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center gap-1">
+                    <span className="text-sm font-medium text-slate-400 dark:text-slate-500 italic">{t.waitingForProcess}</span>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>
@@ -211,7 +214,7 @@ export const Visualizer: React.FC<VisualizerProps> = ({
 
           {/* Empty State */}
           {ganttChart.length === 0 && (
-            <div className="absolute inset-0 flex items-center justify-center gap-2 text-slate-400 dark:text-slate-600">
+            <div className="absolute inset-0 flex items-start pt-10 justify-center gap-2 text-slate-400 dark:text-slate-600">
               <AlertCircle size={16} />
               <span className="text-sm font-medium">{t.emptyTimeline}</span>
             </div>

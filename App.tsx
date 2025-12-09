@@ -1,6 +1,5 @@
-
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Play, Pause, RotateCcw, Activity, BrainCircuit, StepForward, Sun, Moon, Layout, X, Plus, Globe, Github, ChevronUp, Check } from 'lucide-react';
+import { Play, Pause, RotateCcw, Plus, Trash2, Github, Moon, Sun, BarChart3, Settings, ChevronUp, Check, BrainCircuit, X, StepForward, HelpCircle, Activity, Globe, Layout, Cpu } from 'lucide-react';
 import { Process, AlgorithmType, SchedulerState, AnalysisReport, Language } from './types.ts';
 import { INITIAL_PROCESSES, ALGORITHMS } from './constants.ts';
 import { stepSimulation, resetSimulation } from './services/schedulerLogic.ts';
@@ -8,6 +7,7 @@ import { analyzeSimulation } from './services/geminiService.ts';
 import { ProcessForm } from './components/ProcessForm.tsx';
 import { Visualizer } from './components/Visualizer.tsx';
 import { StatsTable } from './components/StatsTable.tsx';
+import { AlgoHelpModal } from './components/AlgoHelpModal.tsx';
 import { LanguageProvider, useLanguage } from './contexts/LanguageContext.tsx';
 
 const MainApp: React.FC = () => {
@@ -25,6 +25,7 @@ const MainApp: React.FC = () => {
   const [quantum, setQuantum] = useState(2);
   const [simulationSpeed, setSimulationSpeed] = useState(1000);
   const [isAlgoDropdownOpen, setIsAlgoDropdownOpen] = useState(false);
+  const [isAlgoHelpOpen, setIsAlgoHelpOpen] = useState(false);
 
   // Ref for positioning the fixed dropdown
   const algoBtnRef = useRef<HTMLButtonElement>(null);
@@ -40,10 +41,10 @@ const MainApp: React.FC = () => {
   const [analysis, setAnalysis] = useState<AnalysisReport | null>(null);
 
   // --- Handlers ---
-  const handleAddProcess = (p: { arrivalTime: number; burstTime: number; priority: number; color: string }) => {
+  const handleAddProcess = (p: { arrivalTime: number; burstTime: number; priority: number; color: string; name?: string }) => {
     const newProcess: Process = {
       id: `p${baseProcesses.length + 1}`,
-      name: `P${baseProcesses.length + 1}`,
+      name: p.name || `P${baseProcesses.length + 1}`,
       arrivalTime: p.arrivalTime,
       burstTime: p.burstTime,
       priority: p.priority,
@@ -58,7 +59,8 @@ const MainApp: React.FC = () => {
 
     const updated = [...baseProcesses, newProcess];
     setBaseProcesses(updated);
-    if (schedulerState.currentTime === 0 || schedulerState.isFinished) {
+    // Only auto-reset if simulation hasn't started yet
+    if (schedulerState.currentTime === 0) {
       setSchedulerState(resetSimulation(updated, quantum));
     }
   };
@@ -78,8 +80,8 @@ const MainApp: React.FC = () => {
 
     setBaseProcesses(updatedProcesses);
 
-    // Auto-update visualizer if we are at the start or finished
-    if (schedulerState.currentTime === 0 || schedulerState.isFinished) {
+    // Only auto-reset if simulation hasn't started yet
+    if (schedulerState.currentTime === 0) {
       setSchedulerState(resetSimulation(updatedProcesses, quantum));
     }
   };
@@ -87,7 +89,8 @@ const MainApp: React.FC = () => {
   const handleDeleteProcess = (id: string) => {
     const updated = baseProcesses.filter(p => p.id !== id);
     setBaseProcesses(updated);
-    if (schedulerState.currentTime === 0 || schedulerState.isFinished) {
+    // Only auto-reset if simulation hasn't started yet
+    if (schedulerState.currentTime === 0) {
       setSchedulerState(resetSimulation(updated, quantum));
     }
   };
@@ -152,8 +155,14 @@ const MainApp: React.FC = () => {
   useEffect(() => {
     if (darkMode) {
       document.documentElement.classList.add('dark');
+      // Update favicon for dark mode
+      const favicon = document.getElementById('favicon') as HTMLLinkElement;
+      if (favicon) favicon.href = '/logo-dark.png';
     } else {
       document.documentElement.classList.remove('dark');
+      // Update favicon for light mode
+      const favicon = document.getElementById('favicon') as HTMLLinkElement;
+      if (favicon) favicon.href = '/logo-light.png';
     }
   }, [darkMode]);
 
@@ -173,14 +182,16 @@ const MainApp: React.FC = () => {
 
   return (
     <div className={`min-h-screen transition-colors duration-500 font-inter ${darkMode ? 'dark bg-dark-bg' : 'bg-slate-50'}`}>
-      <div className="fixed inset-0 bg-grid-pattern pointer-events-none z-0"></div>
+      <div className="fixed inset-0 app-background pointer-events-none z-0"></div>
 
       {/* --- Floating Header --- */}
       <header className="fixed top-4 left-4 right-4 z-40 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-white/20 dark:border-slate-700/30 shadow-lg rounded-2xl px-6 py-3 flex items-center justify-between transition-all duration-300">
         <div className="flex items-center gap-3">
-          <div className="p-2 bg-indigo-600 rounded-lg shadow-lg shadow-indigo-600/30 text-white animate-pulse-slow">
-            <Activity size={20} />
-          </div>
+          <img
+            src={darkMode ? '/logo-dark.png' : '/logo-light.png'}
+            alt="Logo"
+            className="w-10 h-10 rounded-lg shadow-lg"
+          />
           <div>
             <h1 className="text-lg font-bold text-slate-800 dark:text-white leading-tight hidden sm:block">{t.title}</h1>
             <h1 className="text-lg font-bold text-slate-800 dark:text-white leading-tight sm:hidden">CPU Sim</h1>
@@ -194,7 +205,7 @@ const MainApp: React.FC = () => {
             onClick={() => setMobileInputOpen(true)}
             className="lg:hidden p-2.5 rounded-xl bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-800"
           >
-            <Plus size={18} />
+            <Cpu size={18} />
           </button>
 
           <div className="h-8 w-[1px] bg-slate-200 dark:bg-slate-700 mx-1 hidden sm:block"></div>
@@ -251,7 +262,7 @@ const MainApp: React.FC = () => {
           </button>
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
-            className={`p-2.5 rounded-xl bg-white/50 dark:bg-slate-800/50 hover:bg-white dark:hover:bg-slate-700 transition-all border border-transparent hover:border-slate-200 dark:hover:border-slate-600 active:scale-95 ${sidebarOpen ? 'text-indigo-600 dark:text-indigo-400 ring-2 ring-indigo-500/20' : 'text-slate-600 dark:text-slate-300'}`}
+            className={`p-2.5 rounded-xl bg-white/50 dark:bg-slate-800/50 hover:bg-white dark:hover:bg-slate-700 transition-all border border-transparent hover:border-slate-200 dark:hover:border-slate-600 active:scale-95 ${sidebarOpen ? 'text-indigo-600 dark:text-indigo-400 ring-2 ring-indigo-500/20' : 'text-slate-600 dark:text-slate-300'} xl:hidden`}
             title="Toggle Stats"
           >
             <Layout size={18} />
@@ -263,27 +274,48 @@ const MainApp: React.FC = () => {
       <main className="relative pt-28 pb-32 px-4 h-screen flex gap-6 overflow-hidden z-10">
 
         {/* Left: Input Panel (Desktop) */}
-        <div className="w-96 flex-shrink-0 hidden lg:flex flex-col gap-4 animate-fade-in-left">
-          <ProcessForm
-            processes={baseProcesses}
-            onAddProcess={handleAddProcess}
-            onUpdateProcess={handleUpdateProcess}
-            onDeleteProcess={handleDeleteProcess}
-            onClear={handleClear}
-            disabled={isPlaying && !schedulerState.isFinished}
-          />
+        <div className="w-96 flex-shrink-0 hidden lg:flex flex-col animate-fade-in-left">
+          {/* Header to match Right Sidebar */}
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-bold text-slate-800 dark:text-white flex items-center gap-2">
+              <Cpu className="text-indigo-500" /> {t.processInput}
+            </h2>
+          </div>
+
+          <div className="flex-grow overflow-hidden">
+            <ProcessForm
+              processes={baseProcesses}
+              onAddProcess={handleAddProcess}
+              onUpdateProcess={handleUpdateProcess}
+              onDeleteProcess={handleDeleteProcess}
+              onClear={handleClear}
+              disabled={isPlaying && !schedulerState.isFinished}
+            />
+          </div>
         </div>
 
-        {/* Mobile Input Drawer */}
-        {mobileInputOpen && (
-          <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-4 animate-fade-in-up lg:hidden">
-            <div className="bg-white dark:bg-slate-900 w-full max-w-md rounded-2xl p-2 shadow-2xl relative">
+        {/* Mobile Input Sidebar (Left) - Mirroring Right Sidebar */}
+        <div className={`
+          fixed inset-y-0 left-0 w-full md:w-[450px] z-50 
+          bg-white/90 dark:bg-slate-900/95 backdrop-blur-2xl border-r border-white/20 dark:border-slate-700/50 shadow-2xl 
+          transform transition-transform duration-500 cubic-bezier(0.4, 0, 0.2, 1)
+          ${mobileInputOpen ? 'translate-x-0' : '-translate-x-full'}
+          lg:hidden
+        `}>
+          <div className="h-full flex flex-col p-6 pt-24">
+            <div className="flex items-center justify-between mb-8">
+              <h2 className="text-lg font-bold text-slate-800 dark:text-white flex items-center gap-2">
+                <Cpu className="text-indigo-500" /> {t.processes}
+              </h2>
               <button
                 onClick={() => setMobileInputOpen(false)}
-                className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-slate-500 transition-colors"
               >
                 <X size={20} />
               </button>
+            </div>
+
+            <div className="flex-grow overflow-y-auto scrollbar-hide pb-20">
               <ProcessForm
                 processes={baseProcesses}
                 onAddProcess={(p) => { handleAddProcess(p); setMobileInputOpen(false); }}
@@ -294,7 +326,7 @@ const MainApp: React.FC = () => {
               />
             </div>
           </div>
-        )}
+        </div>
 
         {/* Center: Visualization Canvas */}
         <div className="flex-grow overflow-y-auto scrollbar-hide pb-20 rounded-2xl">
@@ -308,18 +340,25 @@ const MainApp: React.FC = () => {
         </div>
 
         {/* Right: Sliding Sidebar for Stats */}
-        <div className={`fixed inset-y-0 right-0 w-full md:w-[450px] bg-white/90 dark:bg-slate-900/95 backdrop-blur-2xl border-l border-white/20 dark:border-slate-700/50 shadow-2xl z-50 transform transition-transform duration-500 cubic-bezier(0.4, 0, 0.2, 1) ${sidebarOpen ? 'translate-x-0' : 'translate-x-full'}`}>
-          <div className="h-full flex flex-col p-6 pt-24">
-            <div className="flex items-center justify-between mb-8">
+        {/* Right: Sliding Sidebar for Stats */}
+        <div className={`
+          fixed inset-y-0 right-0 w-full md:w-[450px] z-50 
+          bg-white/90 dark:bg-slate-900/95 backdrop-blur-2xl border-l border-white/20 dark:border-slate-700/50 shadow-2xl 
+          transform transition-transform duration-500 cubic-bezier(0.4, 0, 0.2, 1)
+          ${sidebarOpen ? 'translate-x-0' : 'translate-x-full'}
+          xl:static xl:transform-none xl:w-96 xl:bg-transparent xl:dark:bg-transparent xl:backdrop-blur-none xl:border-none xl:shadow-none xl:z-auto xl:translate-x-0 xl:flex flex-col
+        `}>
+          <div className="h-full flex flex-col p-6 pt-24 xl:p-0 xl:pt-0">
+            <div className="flex items-center justify-between mb-8 xl:mb-4">
               <h2 className="text-lg font-bold text-slate-800 dark:text-white flex items-center gap-2">
                 <BrainCircuit className="text-indigo-500" /> {t.analysisStats}
               </h2>
-              <button onClick={() => setSidebarOpen(false)} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-slate-500 transition-colors">
+              <button onClick={() => setSidebarOpen(false)} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-slate-500 transition-colors xl:hidden">
                 <X size={20} />
               </button>
             </div>
 
-            <div className="flex-grow overflow-y-auto space-y-8 scrollbar-hide pb-20">
+            <div className="flex-grow overflow-y-auto space-y-8 scrollbar-hide pb-20 xl:pb-0">
               <StatsTable processes={schedulerState.processes} />
 
               {/* AI Analysis Card */}
@@ -362,7 +401,16 @@ const MainApp: React.FC = () => {
           {/* Algorithm Select - Custom Dropdown */}
           <div className="flex items-center gap-4 border-r border-slate-200 dark:border-slate-700 pr-4 mr-2 flex-shrink-0">
             <div className="flex flex-col">
-              <span className="text-[9px] font-bold text-slate-400 uppercase mb-0.5">{t.algorithm}</span>
+              <div className="flex items-center gap-2 mb-0.5">
+                <span className="text-[9px] font-bold text-slate-400 uppercase">{t.algorithm}</span>
+                <button
+                  onClick={() => setIsAlgoHelpOpen(true)}
+                  className="text-slate-400 hover:text-indigo-500 transition-colors"
+                  title="Info Algoritmo"
+                >
+                  <HelpCircle size={12} />
+                </button>
+              </div>
 
               <button
                 ref={algoBtnRef}
@@ -418,7 +466,7 @@ const MainApp: React.FC = () => {
           </div>
 
           {/* Speed Control */}
-          <div className="border-l border-slate-200 dark:border-slate-700 pl-4 ml-2 flex flex-col w-24 flex-shrink-0">
+          <div className="border-l border-slate-200 dark:border-slate-700 pl-4 ml-2 flex flex-col w-40 flex-shrink-0">
             <span className="text-[9px] font-bold text-slate-400 uppercase mb-1">{t.speed}: {simulationSpeed}ms</span>
             <input
               type="range" min="100" max="2000" step="100"
@@ -471,6 +519,14 @@ const MainApp: React.FC = () => {
             </div>
           </div>
         </>
+      )}
+
+      {/* Algorithm Help Modal */}
+      {isAlgoHelpOpen && (
+        <AlgoHelpModal
+          algorithm={algorithm}
+          onClose={() => setIsAlgoHelpOpen(false)}
+        />
       )}
 
     </div>

@@ -7,7 +7,7 @@ import { useLanguage } from '../contexts/LanguageContext.tsx';
 
 interface ProcessFormProps {
   processes: Process[];
-  onAddProcess: (p: { arrivalTime: number; burstTime: number; priority: number; color: string }) => void;
+  onAddProcess: (p: { arrivalTime: number; burstTime: number; priority: number; color: string; name?: string }) => void;
   onUpdateProcess: (id: string, p: Partial<Process>) => void;
   onDeleteProcess: (id: string) => void;
   onClear: () => void;
@@ -21,19 +21,21 @@ const MiniInput = ({
   min,
   onChange,
   disabled,
-  width = 'w-16'
+  width = 'w-16',
+  type = 'number'
 }: {
   label: string,
-  value: number,
-  min: number,
+  value: string | number,
+  min?: number,
   onChange: (val: string) => void,
   disabled: boolean,
-  width?: string
+  width?: string,
+  type?: string
 }) => (
   <div className={`flex flex-col ${width}`}>
     <span className="text-[8px] text-slate-400 font-bold uppercase truncate mb-0.5">{label}</span>
     <input
-      type="number"
+      type={type}
       min={min}
       value={value}
       onChange={(e) => onChange(e.target.value)}
@@ -61,8 +63,8 @@ const VerticalSpinnerInput = ({
   const decrement = () => { if (value > min) onChange(value - 1); };
 
   return (
-    <div className="flex items-center bg-slate-100 dark:bg-slate-700 rounded px-1.5 py-0.5 gap-1">
-      <span className="text-[8px] text-slate-400 font-bold shrink-0 w-5">{label}</span>
+    <div className="flex items-center bg-slate-100 dark:bg-slate-700 rounded px-1 py-0.5">
+      <span className="text-[8px] text-slate-400 font-bold shrink-0 w-4">{label}</span>
       <input
         type="number"
         min={min}
@@ -72,7 +74,7 @@ const VerticalSpinnerInput = ({
           if (!isNaN(val) && val >= min) onChange(val);
         }}
         disabled={disabled}
-        className="w-6 bg-transparent text-[11px] font-mono font-bold text-slate-600 dark:text-slate-300 outline-none text-center [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+        className="w-5 bg-transparent text-[11px] font-mono font-bold text-slate-600 dark:text-slate-300 outline-none text-center [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
       />
       {/* Stacked arrows */}
       <div className="flex flex-col -my-0.5">
@@ -219,6 +221,7 @@ const HelpModal = ({ onClose }: { onClose: () => void }) => {
 };
 
 export const ProcessForm: React.FC<ProcessFormProps> = ({ processes, onAddProcess, onUpdateProcess, onDeleteProcess, onClear, disabled }) => {
+  const [name, setName] = useState('');
   const [arrivalTime, setArrivalTime] = useState(0);
   const [burstTime, setBurstTime] = useState(1);
   const [priority, setPriority] = useState(1);
@@ -232,6 +235,7 @@ export const ProcessForm: React.FC<ProcessFormProps> = ({ processes, onAddProces
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onAddProcess({
+      name: name.trim() || undefined,
       arrivalTime: Number(arrivalTime),
       burstTime: Number(burstTime),
       priority: Number(priority),
@@ -241,179 +245,194 @@ export const ProcessForm: React.FC<ProcessFormProps> = ({ processes, onAddProces
     const nextColorIdx = (PROCESS_COLORS.indexOf(selectedColor) + 1) % PROCESS_COLORS.length;
     setSelectedColor(PROCESS_COLORS[nextColorIdx]);
     setArrivalTime(prev => prev + 1);
+    setName(''); // Reset name
   };
 
   return (
-    <div className="bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl border border-white/20 dark:border-slate-700/30 shadow-xl rounded-2xl p-3 flex flex-col gap-3 transition-all duration-300 h-full max-h-[calc(100vh-8rem)]">
-      {/* Header - with Help Button */}
-      <div className="flex items-center justify-between shrink-0">
-        <h2 className="text-xs font-bold text-slate-800 dark:text-white uppercase tracking-wider flex items-center gap-1.5">
-          <List size={14} className="text-indigo-500" /> {t.processInput}
-        </h2>
-        <button
-          onClick={() => setHelpOpen(true)}
-          className="p-1 text-slate-400 hover:text-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 rounded-lg transition-colors"
-          title="Help"
-        >
-          <HelpCircle size={14} />
-        </button>
-      </div>
-
-      {/* Add Process Form - Single Inline Row with Full Labels */}
-      <form onSubmit={handleSubmit} className="flex items-end gap-2 shrink-0 flex-wrap">
-        <MiniInput
-          label={t.arrival}
-          value={arrivalTime}
-          min={0}
-          disabled={disabled}
-          onChange={(val) => setArrivalTime(parseInt(val) || 0)}
-          width="w-16"
-        />
-        <MiniInput
-          label={t.burst}
-          value={burstTime}
-          min={1}
-          disabled={disabled}
-          onChange={(val) => setBurstTime(parseInt(val) || 1)}
-          width="w-16"
-        />
-        <MiniInput
-          label={t.priority}
-          value={priority}
-          min={1}
-          disabled={disabled}
-          onChange={(val) => setPriority(parseInt(val) || 1)}
-          width="w-16"
-        />
-
-        {/* Compact Color Picker */}
-        <div className="relative pb-1">
+    <div className="flex flex-col gap-4 h-full">
+      {/* Input Section - Styled as a Card */}
+      <div className="bg-white/50 dark:bg-slate-800/50 backdrop-blur-sm border border-slate-200 dark:border-slate-700 rounded-xl p-4 shadow-sm flex flex-col gap-3 shrink-0">
+        {/* Header inside Card */}
+        <div className="flex items-center justify-between">
+          <h2 className="text-xs font-bold text-slate-800 dark:text-white uppercase tracking-wider flex items-center gap-1.5">
+            <List size={14} className="text-indigo-500" /> {t.processInput}
+          </h2>
           <button
-            ref={colorBtnRef}
-            type="button"
-            onClick={() => setColorPickerOpen(!colorPickerOpen)}
-            disabled={disabled}
-            className="w-6 h-6 rounded-full border-2 border-white dark:border-slate-700 shadow-sm hover:scale-110 transition-transform flex items-center justify-center"
-            style={{ backgroundColor: selectedColor }}
+            onClick={() => setHelpOpen(true)}
+            className="p-1 text-slate-400 hover:text-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 rounded-lg transition-colors"
+            title="Help"
           >
-            <ChevronDown size={10} className="text-white drop-shadow" />
+            <HelpCircle size={14} />
           </button>
-
-          {colorPickerOpen && (
-            <>
-              <div className="fixed inset-0 z-10" onClick={() => setColorPickerOpen(false)} />
-              <div className="absolute left-0 top-full mt-1 z-20 bg-white dark:bg-slate-800 rounded-lg p-2 shadow-xl border border-slate-200 dark:border-slate-700 grid grid-cols-5 gap-1.5 min-w-[120px]">
-                {PROCESS_COLORS.map((c) => (
-                  <button
-                    key={c}
-                    type="button"
-                    onClick={() => { setSelectedColor(c); setColorPickerOpen(false); }}
-                    style={{ backgroundColor: c }}
-                    className={`w-5 h-5 rounded-full transition-transform hover:scale-110 ${selectedColor === c ? 'ring-2 ring-offset-1 ring-slate-400 dark:ring-offset-slate-800' : ''}`}
-                  >
-                    {selectedColor === c && <Check size={10} className="text-white drop-shadow mx-auto" />}
-                  </button>
-                ))}
-              </div>
-            </>
-          )}
         </div>
 
-        {/* Compact Add Button */}
-        <button
-          type="submit"
-          disabled={disabled}
-          className="flex items-center gap-1 bg-indigo-600 hover:bg-indigo-500 disabled:bg-slate-400 text-white px-3 py-1.5 rounded-lg font-medium shadow-md hover:shadow-lg transition-all active:scale-95 text-xs ml-auto"
-        >
-          <Plus size={14} />
-          <span className="hidden sm:inline">{t.addProcess}</span>
-        </button>
-      </form>
+        {/* Form Inputs */}
+        <form onSubmit={handleSubmit} className="flex items-end gap-2 flex-wrap">
+          <MiniInput
+            label="Name"
+            value={name}
+            type="text"
+            disabled={disabled}
+            onChange={(val) => setName(val)}
+            width="w-16"
+          />
+          <MiniInput
+            label={t.arrival}
+            value={arrivalTime}
+            min={0}
+            disabled={disabled}
+            onChange={(val) => setArrivalTime(parseInt(val) || 0)}
+            width="w-14"
+          />
+          <MiniInput
+            label={t.burst}
+            value={burstTime}
+            min={1}
+            disabled={disabled}
+            onChange={(val) => setBurstTime(parseInt(val) || 1)}
+            width="w-14"
+          />
+          <MiniInput
+            label={t.priority}
+            value={priority}
+            min={1}
+            disabled={disabled}
+            onChange={(val) => setPriority(parseInt(val) || 1)}
+            width="w-14"
+          />
 
-      {/* Process Counter - Above the list */}
-      <div className="flex items-center gap-2 px-1 shrink-0">
-        <span className="text-[10px] text-slate-400 font-medium">{t.active}:</span>
-        <span className="text-[10px] font-mono bg-indigo-100 dark:bg-indigo-900/50 text-indigo-600 dark:text-indigo-300 px-1.5 py-0.5 rounded border border-indigo-200 dark:border-indigo-800">
-          {processes.length}
-        </span>
-      </div>
-
-      {/* Scrollable Process List - Compact Cards with Editable Colors and Vertical Spinners */}
-      <div className="flex-1 overflow-y-auto space-y-1.5 scrollbar-hide min-h-0 bg-slate-50/50 dark:bg-slate-800/20 rounded-lg p-1.5 border border-slate-100 dark:border-slate-700/50">
-        {processes.map((p) => (
-          <div
-            key={p.id}
-            className="flex items-center gap-2 px-2 py-1.5 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-indigo-300 dark:hover:border-indigo-800 transition-all"
-          >
-            {/* Color dot - editable */}
-            <ProcessColorPicker
-              currentColor={p.color}
-              onChange={(color) => onUpdateProcess(p.id, { color })}
-              disabled={disabled}
-            />
-
-            {/* Process name - editable inline */}
-            <input
-              type="text"
-              value={p.name}
-              onChange={(e) => onUpdateProcess(p.id, { name: e.target.value })}
-              disabled={disabled}
-              className="w-8 bg-transparent text-xs font-bold text-slate-700 dark:text-slate-200 border-b border-transparent focus:border-indigo-500 outline-none truncate shrink-0"
-            />
-
-            {/* Stats with vertical spinner controls - no horizontal scroll */}
-            <div className="flex items-center gap-1.5 flex-1">
-              <VerticalSpinnerInput
-                label="AT"
-                value={p.arrivalTime}
-                min={0}
-                disabled={disabled}
-                onChange={(val) => onUpdateProcess(p.id, { arrivalTime: val })}
-              />
-              <VerticalSpinnerInput
-                label="BT"
-                value={p.burstTime}
-                min={1}
-                disabled={disabled}
-                onChange={(val) => onUpdateProcess(p.id, { burstTime: val, remainingTime: val })}
-              />
-              <VerticalSpinnerInput
-                label="PR"
-                value={p.priority}
-                min={1}
-                disabled={disabled}
-                onChange={(val) => onUpdateProcess(p.id, { priority: val })}
-              />
-            </div>
-
-            {/* Delete button - Always visible red trash */}
+          {/* Color Picker */}
+          <div className="relative pb-1">
             <button
-              onClick={() => onDeleteProcess(p.id)}
+              ref={colorBtnRef}
+              type="button"
+              onClick={() => setColorPickerOpen(!colorPickerOpen)}
               disabled={disabled}
-              className="p-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-all shrink-0"
-              title="Remove"
+              className="w-6 h-6 rounded-full border-2 border-white dark:border-slate-700 shadow-sm hover:scale-110 transition-transform flex items-center justify-center"
+              style={{ backgroundColor: selectedColor }}
             >
-              <Trash2 size={14} />
+              <ChevronDown size={10} className="text-white drop-shadow" />
             </button>
-          </div>
-        ))}
 
-        {processes.length === 0 && (
-          <div className="h-full flex flex-col items-center justify-center text-slate-400 text-[10px] italic gap-2 min-h-[80px] opacity-60">
-            <List size={16} />
-            <span>{t.noProcesses}</span>
+            {colorPickerOpen && (
+              <>
+                <div className="fixed inset-0 z-10" onClick={() => setColorPickerOpen(false)} />
+                <div className="absolute left-0 top-full mt-1 z-20 bg-white dark:bg-slate-800 rounded-lg p-2 shadow-xl border border-slate-200 dark:border-slate-700 grid grid-cols-5 gap-1.5 min-w-[120px]">
+                  {PROCESS_COLORS.map((c) => (
+                    <button
+                      key={c}
+                      type="button"
+                      onClick={() => { setSelectedColor(c); setColorPickerOpen(false); }}
+                      style={{ backgroundColor: c }}
+                      className={`w-5 h-5 rounded-full transition-transform hover:scale-110 ${selectedColor === c ? 'ring-2 ring-offset-1 ring-slate-400 dark:ring-offset-slate-800' : ''}`}
+                    >
+                      {selectedColor === c && <Check size={10} className="text-white drop-shadow mx-auto" />}
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
           </div>
-        )}
+
+          <button
+            type="submit"
+            disabled={disabled}
+            className="flex items-center gap-1 bg-indigo-600 hover:bg-indigo-500 disabled:bg-slate-400 text-white px-3 py-1.5 rounded-lg font-medium shadow-md hover:shadow-lg transition-all active:scale-95 text-xs ml-auto"
+          >
+            <Plus size={14} />
+          </button>
+        </form>
       </div>
 
-      {/* Clear All - Compact */}
-      <button
-        onClick={onClear}
-        disabled={disabled || processes.length === 0}
-        className="flex items-center justify-center gap-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 p-1.5 rounded-lg text-[10px] font-medium transition-colors border border-transparent hover:border-red-100 dark:hover:border-red-900/30 shrink-0 disabled:opacity-50 disabled:pointer-events-none"
-      >
-        <Trash2 size={12} /> {t.clearAll}
-      </button>
+      {/* List Section - Styled as a separate Card */}
+      <div className="bg-white/50 dark:bg-slate-800/50 backdrop-blur-sm border border-slate-200 dark:border-slate-700 rounded-xl flex-grow flex flex-col overflow-hidden shadow-inner">
+        {/* List Toolbar */}
+        <div className="flex items-center justify-between p-3 border-b border-slate-100 dark:border-slate-700/50 bg-slate-50/50 dark:bg-slate-900/30">
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] text-slate-400 font-medium uppercase tracking-wider">{t.active}:</span>
+            <span className="text-[10px] font-mono bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 px-1.5 py-0.5 rounded border border-slate-200 dark:border-slate-700 shadow-sm">
+              {processes.length}
+            </span>
+          </div>
+
+          <button
+            onClick={onClear}
+            disabled={disabled || processes.length === 0}
+            className="text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 p-1.5 rounded-lg text-[10px] font-medium transition-colors disabled:opacity-30 disabled:pointer-events-none"
+            title={t.clearAll}
+          >
+            <Trash2 size={12} />
+          </button>
+        </div>
+
+        {/* Scrollable Process List */}
+        <div className="flex-1 overflow-y-auto space-y-1.5 scrollbar-hide p-2">
+          {processes.map((p) => (
+            <div
+              key={p.id}
+              className="flex items-center gap-2 px-2 py-2 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-indigo-300 dark:hover:border-indigo-800 transition-all shadow-sm group"
+            >
+              {/* Color dot */}
+              <ProcessColorPicker
+                currentColor={p.color}
+                onChange={(color) => onUpdateProcess(p.id, { color })}
+                disabled={disabled}
+              />
+
+              {/* Process name */}
+              <input
+                type="text"
+                value={p.name}
+                onChange={(e) => onUpdateProcess(p.id, { name: e.target.value })}
+                disabled={disabled}
+                className="flex-1 min-w-0 bg-transparent text-xs font-bold text-slate-700 dark:text-slate-200 border-b border-transparent focus:border-indigo-500 outline-none truncate"
+              />
+
+              {/* Stats Vertical Spinners */}
+              <div className="flex items-center gap-1 shrink-0">
+                <VerticalSpinnerInput
+                  label="AT"
+                  value={p.arrivalTime}
+                  min={0}
+                  disabled={disabled}
+                  onChange={(val) => onUpdateProcess(p.id, { arrivalTime: val })}
+                />
+                <VerticalSpinnerInput
+                  label="BT"
+                  value={p.burstTime}
+                  min={1}
+                  disabled={disabled}
+                  onChange={(val) => onUpdateProcess(p.id, { burstTime: val, remainingTime: val })}
+                />
+                <VerticalSpinnerInput
+                  label="PR"
+                  value={p.priority}
+                  min={1}
+                  disabled={disabled}
+                  onChange={(val) => onUpdateProcess(p.id, { priority: val })}
+                />
+              </div>
+
+              {/* Delete button */}
+              <button
+                onClick={() => onDeleteProcess(p.id)}
+                disabled={disabled}
+                className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-all shrink-0"
+                title="Remove"
+              >
+                <Trash2 size={14} />
+              </button>
+            </div>
+          ))}
+
+          {processes.length === 0 && (
+            <div className="h-full flex flex-col items-center justify-center text-slate-400 text-[10px] italic gap-2 min-h-[120px] opacity-60">
+              <List size={20} />
+              <span>{t.noProcesses}</span>
+            </div>
+          )}
+        </div>
+      </div>
 
       {/* Help Modal */}
       {helpOpen && <HelpModal onClose={() => setHelpOpen(false)} />}
