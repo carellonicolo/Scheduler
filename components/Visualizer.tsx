@@ -1,7 +1,8 @@
 import React, { useRef, useEffect } from 'react';
 import { GanttBlock, Process } from '../types.ts';
-import { Cpu, Server, Clock, AlertCircle } from 'lucide-react';
+import { Cpu, Server, Clock, AlertCircle, Hourglass } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext.tsx';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface VisualizerProps {
   ganttChart: GanttBlock[];
@@ -10,6 +11,135 @@ interface VisualizerProps {
   processes: Process[];
   readyQueue: string[];
 }
+
+// Unified ProcessCard component handling both Queue and CPU states
+const ProcessCard: React.FC<{
+  process: Process;
+  variant: 'queue' | 'active';
+  layoutId: string;
+}> = ({ process, variant, layoutId }) => {
+  const { t } = useLanguage();
+
+  const isIncoming = process.state === 'waiting';
+  const isActive = variant === 'active';
+
+  // Calculate progress
+  const progress = isIncoming
+    ? 0
+    : ((process.burstTime - process.remainingTime) / process.burstTime) * 100;
+
+  // Dynamic Styles based on variant
+  const containerClasses = isActive
+    ? "w-56 h-72 py-6 px-4" // Active (CPU) Size
+    : "w-24 h-32 py-3 px-2"; // Queue Size
+
+  const nameSize = isActive ? "text-3xl" : "text-base";
+  const iconSize = isActive ? "w-16 h-16" : "w-9 h-9";
+  const innerIconSize = isActive ? "w-6 h-6" : "w-3.5 h-3.5";
+  const prioSize = isActive ? "text-xs px-3 py-1" : "text-[9px] px-1.5 py-0.5";
+  const footerTextSize = isActive ? "text-xs" : "text-[9px]";
+
+  return (
+    <motion.div
+      layoutId={layoutId}
+      layout // Crucial for smooth size transition
+      initial={isActive ? { opacity: 0, scale: 0.9 } : { opacity: 0, scale: 0.8, y: 10 }}
+      animate={{ opacity: 1, scale: 1, y: 0 }}
+      exit={{ opacity: 0, scale: 0.8, transition: { duration: 0.2 } }}
+      whileHover={{ scale: 1.02, transition: { duration: 0.2 } }}
+      style={{ borderRadius: '24px' }} // Forced border radius for consistency
+      className={`
+        relative z-10 flex flex-col items-center justify-between
+        rounded-3xl overflow-hidden transition-shadow duration-300 cursor-help
+        bg-white/80 dark:bg-slate-800/80 backdrop-blur-md
+        border-[1.5px] border-white/40 dark:border-slate-700/50
+        shadow-sm hover:shadow-2xl hover:shadow-indigo-500/10 dark:hover:shadow-indigo-900/20
+        group ${containerClasses}
+      `}
+    >
+      {/* Top Status Indicator */}
+      <motion.div
+        layout
+        className="absolute top-0 left-1/2 -translate-x-1/2 rounded-b-lg shadow-sm"
+        style={{ backgroundColor: process.color, width: isActive ? '40%' : '50%', height: isActive ? '6px' : '4px' }}
+      />
+
+      {/* Main Content */}
+      <div className="flex flex-col items-center flex-1 w-full justify-center gap-3">
+        {/* Icon */}
+        <motion.div
+          layout
+          className={`flex items-center justify-center rounded-full bg-slate-50 dark:bg-slate-900/50 shadow-inner ring-1 ring-slate-100 dark:ring-slate-700/50 ${iconSize}`}
+        >
+          <div className={`rounded-full shadow-sm ${innerIconSize}`} style={{ backgroundColor: process.color }}></div>
+        </motion.div>
+
+        {/* Name */}
+        <motion.span
+          layout
+          className={`font-extrabold text-slate-700 dark:text-slate-200 tracking-tight leading-none text-center truncate w-full px-2 ${nameSize}`}
+        >
+          {process.name}
+        </motion.span>
+
+        {/* Priority Badge */}
+        <motion.span
+          layout
+          className={`text-slate-400 font-bold uppercase tracking-wider opacity-90 rounded-full bg-slate-100/50 dark:bg-slate-900/30 ${prioSize}`}
+        >
+          Prio: {process.priority}
+        </motion.span>
+      </div>
+
+      {/* Footer Info */}
+      <motion.div layout className={`w-full pt-3 border-t border-slate-100 dark:border-slate-700/50 mt-auto ${footerTextSize}`}>
+        {isIncoming ? (
+          <div className="flex items-center justify-center gap-2 font-mono text-slate-500 dark:text-slate-400">
+            <span className="opacity-60 font-semibold">AT:</span>
+            <span className="font-bold bg-slate-100 dark:bg-slate-900/50 px-2 py-0.5 rounded text-indigo-500">{process.arrivalTime}</span>
+          </div>
+        ) : (
+          <div className="flex flex-col gap-2 px-1">
+            {/* Progress Bar */}
+            <div className="w-full h-2 bg-slate-200/50 dark:bg-slate-700/50 rounded-full overflow-hidden ring-1 ring-black/5 dark:ring-white/5">
+              <motion.div
+                className="h-full rounded-full"
+                initial={{ width: 0 }}
+                animate={{ width: `${progress}%` }}
+                transition={{ type: "spring", stiffness: 50, damping: 15 }}
+                style={{ backgroundColor: process.color }}
+              />
+            </div>
+            {/* Stats Row */}
+            <div className="flex items-center justify-between font-mono text-slate-400">
+              <span className="opacity-70">{isActive ? t.rem : 'rem'}:</span>
+              <span className="font-bold text-slate-600 dark:text-slate-300">{process.remainingTime}ms</span>
+            </div>
+          </div>
+        )}
+      </motion.div>
+
+      {/* Hover Detail Tooltip (Only for Queue, CPU has Details Panel) */}
+      {!isActive && (
+        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 w-40 bg-slate-800/95 text-white p-3 rounded-2xl text-[10px] opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50 backdrop-blur-xl border border-white/10 shadow-2xl scale-95 group-hover:scale-100 origin-bottom transform duration-200">
+          <div className="flex justify-between py-1 border-b border-white/10 mb-1">
+            <span className="font-bold text-slate-300">{t.arrival}:</span>
+            <span className="font-mono bg-slate-900/50 px-1 rounded">{process.arrivalTime}</span>
+          </div>
+          <div className="flex justify-between py-1 border-b border-white/10 mb-1">
+            <span className="font-bold text-slate-300">{t.burst}:</span>
+            <span className="font-mono bg-slate-900/50 px-1 rounded">{process.burstTime}</span>
+          </div>
+          <div className="flex justify-between py-1">
+            <span className="font-bold text-slate-300">{t.priority}:</span>
+            <span className="font-mono bg-slate-900/50 px-1 rounded">{process.priority}</span>
+          </div>
+          <div className="w-2.5 h-2.5 bg-slate-800/95 border-r border-b border-white/10 rotate-45 absolute -bottom-1 left-1/2 -translate-x-1/2"></div>
+        </div>
+      )}
+    </motion.div>
+  );
+};
 
 export const Visualizer: React.FC<VisualizerProps> = ({
   ganttChart,
@@ -28,28 +158,18 @@ export const Visualizer: React.FC<VisualizerProps> = ({
   }, [ganttChart]);
 
   const currentProcess = processes.find(p => p.id === currentProcessId);
-
-  // Calculate Radial Progress
-  const progressPercent = currentProcess
-    ? ((currentProcess.burstTime - currentProcess.remainingTime) / currentProcess.burstTime) * 100
-    : 0;
-
-  const radius = 60;
-  const stroke = 8;
-  const normalizedRadius = radius - stroke * 2;
-  const circumference = normalizedRadius * 2 * Math.PI;
-  const strokeDashoffset = circumference - (progressPercent / 100) * circumference;
+  const incomingProcesses = processes.filter(p => p.state === 'waiting');
 
   return (
     <div className="flex flex-col gap-6 w-full max-w-6xl mx-auto px-4 lg:px-0">
 
-      {/* Top Section: CPU & Ready Queue */}
+      {/* Top Section: CPU & Queues */}
       <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
 
         {/* CPU Box */}
         <div className="md:col-span-5 relative group">
           <div className={`absolute inset-0 bg-indigo-500/20 dark:bg-indigo-500/10 blur-xl rounded-3xl transition-opacity duration-700 ${currentProcess ? 'opacity-100' : 'opacity-0'}`}></div>
-          <div className="relative bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl border border-white/20 dark:border-slate-700/30 shadow-xl rounded-3xl p-6 flex flex-col min-h-[280px] transition-all duration-300">
+          <div className="relative bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl border border-white/20 dark:border-slate-700/30 shadow-xl rounded-3xl p-6 flex flex-col h-full min-h-[420px] transition-all duration-300">
             <div className="w-full flex items-center gap-2 mb-4">
               <div className="p-1.5 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg">
                 <Cpu size={18} className="text-indigo-600 dark:text-indigo-400" />
@@ -57,66 +177,44 @@ export const Visualizer: React.FC<VisualizerProps> = ({
               <h3 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">{t.cpuCore}</h3>
             </div>
 
-            <div className="flex-1 flex flex-col items-center justify-center w-full">
+            <div className="flex-1 flex flex-col items-center justify-center w-full relative">
 
-              <div className={`relative z-10 transition-all duration-500 ${currentProcess ? 'scale-100' : 'scale-95 opacity-60 grayscale'}`}>
-
-                {/* Radial Progress Container */}
-                <div className="relative flex items-center justify-center">
-                  {/* Background Circle */}
-                  {currentProcess && (
-                    <svg height={radius * 2.4} width={radius * 2.4} className="absolute rotate-[-90deg]">
-                      <circle
-                        stroke="rgba(99, 102, 241, 0.1)"
-                        strokeWidth={stroke}
-                        fill="transparent"
-                        r={normalizedRadius}
-                        cx={radius * 1.2}
-                        cy={radius * 1.2}
-                      />
-                      <circle
-                        stroke={currentProcess.color}
-                        strokeWidth={stroke}
-                        strokeDasharray={circumference + ' ' + circumference}
-                        style={{ strokeDashoffset, transition: 'stroke-dashoffset 0.5s ease-in-out' }}
-                        strokeLinecap="round"
-                        fill="transparent"
-                        r={normalizedRadius}
-                        cx={radius * 1.2}
-                        cy={radius * 1.2}
-                      />
-                    </svg>
-                  )}
-
-                  <div className={`w-24 h-24 rounded-2xl flex items-center justify-center shadow-lg transition-all duration-300 z-10`}
-                    style={{
-                      backgroundColor: currentProcess ? currentProcess.color : 'transparent',
-                      boxShadow: currentProcess ? `0 10px 40px -10px ${currentProcess.color}80` : 'none',
-                      border: currentProcess ? 'none' : '2px dashed #cbd5e1'
-                    }}
-                  >
-                    {currentProcess ? (
-                      <div className="flex flex-col items-center">
-                        <span className="text-3xl font-black text-white drop-shadow-md">{currentProcess.name}</span>
-                      </div>
-                    ) : (
-                      <Cpu size={40} className="text-slate-300 dark:text-slate-600" />
-                    )}
-                  </div>
+              {/* Background CPU Icon when idle */}
+              <div className={`absolute inset-0 flex items-center justify-center transition-opacity duration-500 ${currentProcess ? 'opacity-0' : 'opacity-100'}`}>
+                <div className="w-32 h-32 rounded-3xl flex items-center justify-center shadow-none border-4 border-dashed border-slate-200 dark:border-slate-700/50">
+                  <Cpu size={64} className="text-slate-200 dark:text-slate-700" />
                 </div>
               </div>
 
-              <div className="mt-8 text-center h-12 flex flex-col justify-center">
-                {currentProcess ? (
-                  <div className="inline-flex flex-col items-center animate-fade-in-up">
-                    <span className="text-base font-bold text-slate-800 dark:text-white">{t.processing} {currentProcess.name}</span>
-                    <div className="flex items-center gap-2 mt-1">
-                      <span className="text-xs font-mono text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-md">{t.rem}: {currentProcess.remainingTime}ms</span>
-                      <span className="text-[10px] text-slate-400 font-bold uppercase">{t.priority}: {currentProcess.priority}</span>
-                    </div>
+              {/* Active Process Card */}
+              <AnimatePresence mode="popLayout">
+                {currentProcess && (
+                  <div className="relative z-10">
+                    {/* Background Radial Glow/Effect could go here if needed, but keeping it clean for now */}
+                    <ProcessCard
+                      process={currentProcess}
+                      variant="active"
+                      layoutId={currentProcess.id}
+                    />
                   </div>
+                )}
+              </AnimatePresence>
+
+              {/* Status Text Below */}
+              <div className="absolute bottom-4 left-0 right-0 text-center h-8">
+                {currentProcess ? (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    key="info"
+                    className="inline-flex items-center gap-2"
+                  >
+                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                    <span className="text-sm font-bold text-slate-600 dark:text-slate-300">{t.processing}</span>
+                  </motion.div>
                 ) : (
-                  <div className="flex flex-col items-center gap-1">
+                  <div className="flex items-center justify-center gap-2 opacity-50">
+                    <span className="w-2 h-2 rounded-full bg-slate-400"></span>
                     <span className="text-sm font-medium text-slate-400 dark:text-slate-500 italic">{t.waitingForProcess}</span>
                   </div>
                 )}
@@ -125,66 +223,100 @@ export const Visualizer: React.FC<VisualizerProps> = ({
           </div>
         </div>
 
-        {/* Ready Queue */}
-        <div className="md:col-span-7 bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl border border-white/20 dark:border-slate-700/30 shadow-xl rounded-3xl p-6 flex flex-col min-h-[280px]">
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-2">
-              <div className="p-1.5 bg-emerald-100 dark:bg-emerald-900/30 rounded-lg">
-                <Server size={18} className="text-emerald-600 dark:text-emerald-400" />
+        {/* Queues Column (Income + Ready) */}
+        <div className="md:col-span-7 flex flex-col gap-6 h-full">
+
+          {/* Incoming Queue */}
+          <div className="bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl border border-white/20 dark:border-slate-700/30 shadow-xl rounded-3xl p-6 flex flex-col flex-1 min-h-[200px]">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <div className="p-1.5 bg-amber-100 dark:bg-amber-900/30 rounded-lg">
+                  <Hourglass size={18} className="text-amber-600 dark:text-amber-400" />
+                </div>
+                <h3 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">{t.incomingQueue}</h3>
               </div>
-              <h3 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">{t.readyQueue}</h3>
+              <div className="px-2 py-1 rounded-md bg-slate-100 dark:bg-slate-800/50 text-xs font-mono text-slate-500 dark:text-slate-400">
+                {incomingProcesses.length}
+              </div>
             </div>
-            <div className="px-2 py-1 rounded-md bg-slate-100 dark:bg-slate-800/50 text-xs font-mono text-slate-500 dark:text-slate-400">
-              {readyQueue.length} {t.pending}
+
+            <div className="flex-1 relative rounded-2xl bg-slate-50/50 dark:bg-slate-950/30 border border-slate-100 dark:border-slate-800/50 p-4 overflow-hidden">
+              {/* Grid lines decoration */}
+              <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px)] bg-[size:20px] pointer-events-none"></div>
+
+              <div className="relative h-full flex items-center gap-4 overflow-x-auto scrollbar-hide px-2">
+                <AnimatePresence mode="popLayout">
+                  {incomingProcesses.length === 0 ? (
+                    <motion.div
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 0.5 }}
+                      exit={{ opacity: 0 }}
+                      className="w-full flex flex-col items-center justify-center gap-2"
+                    >
+                      <Hourglass size={24} className="text-slate-300 dark:text-slate-600" />
+                      <span className="text-slate-400 text-[10px] uppercase font-medium">Empty</span>
+                    </motion.div>
+                  ) : (
+                    incomingProcesses.map((p, idx) => (
+                      <div key={p.id} className="relative group">
+                        {idx < incomingProcesses.length - 1 && (
+                          <div className="absolute top-1/2 -right-4 w-4 h-0.5 bg-slate-300 dark:bg-slate-600 z-0"></div>
+                        )}
+                        <ProcessCard process={p} variant="queue" layoutId={p.id} />
+                      </div>
+                    ))
+                  )}
+                </AnimatePresence>
+              </div>
             </div>
           </div>
 
-          <div className="flex-1 relative rounded-2xl bg-slate-50/50 dark:bg-slate-950/30 border border-slate-100 dark:border-slate-800/50 p-4 overflow-hidden">
-            {/* Grid lines decoration */}
-            <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px)] bg-[size:20px] pointer-events-none"></div>
-
-            <div className="relative h-full flex items-center gap-4 overflow-x-auto scrollbar-hide px-2">
-              {readyQueue.length === 0 ? (
-                <div className="w-full flex flex-col items-center justify-center opacity-50 gap-2">
-                  <Server size={32} className="text-slate-300 dark:text-slate-600" />
-                  <span className="text-slate-400 text-xs uppercase font-medium">{t.noReady}</span>
+          {/* Ready Queue */}
+          <div className="bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl border border-white/20 dark:border-slate-700/30 shadow-xl rounded-3xl p-6 flex flex-col flex-1 min-h-[200px]">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <div className="p-1.5 bg-emerald-100 dark:bg-emerald-900/30 rounded-lg">
+                  <Server size={18} className="text-emerald-600 dark:text-emerald-400" />
                 </div>
-              ) : (
-                readyQueue.map((pid, idx) => {
-                  const p = processes.find(proc => proc.id === pid)!;
-                  return (
-                    <div key={`${pid}-${idx}`} className="relative group">
-                      {/* Connection Line */}
-                      {idx < readyQueue.length - 1 && (
-                        <div className="absolute top-1/2 -right-4 w-4 h-0.5 bg-slate-300 dark:bg-slate-600 z-0"></div>
-                      )}
+                <h3 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">{t.readyQueue}</h3>
+              </div>
+              <div className="px-2 py-1 rounded-md bg-slate-100 dark:bg-slate-800/50 text-xs font-mono text-slate-500 dark:text-slate-400">
+                {readyQueue.length} {t.pending}
+              </div>
+            </div>
 
-                      <div
-                        className="relative z-10 w-20 h-24 bg-white dark:bg-slate-800 rounded-xl flex flex-col items-center justify-between py-3 px-2 shadow-lg border-2 border-transparent hover:border-indigo-500/50 transition-all hover:-translate-y-1 hover:shadow-indigo-500/10 cursor-help"
-                      >
-                        <div className="flex flex-col items-center">
-                          <div className="w-2.5 h-2.5 rounded-full mb-2 shadow-sm" style={{ backgroundColor: p.color }}></div>
-                          <span className="font-bold text-slate-700 dark:text-slate-200 text-sm">{p.name}</span>
-                        </div>
-                        <div className="w-full bg-slate-100 dark:bg-slate-700 rounded-full h-1.5 overflow-hidden">
-                          <div
-                            className="h-full rounded-full"
-                            style={{ width: `${((p.burstTime - p.remainingTime) / p.burstTime) * 100}%`, backgroundColor: p.color }}
-                          ></div>
-                        </div>
-                        <span className="text-[10px] text-slate-400 font-mono">{p.remainingTime}ms</span>
+            <div className="flex-1 relative rounded-2xl bg-slate-50/50 dark:bg-slate-950/30 border border-slate-100 dark:border-slate-800/50 p-4 overflow-hidden">
+              {/* Grid lines decoration */}
+              <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px)] bg-[size:20px] pointer-events-none"></div>
 
-                        {/* Hover Card */}
-                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 w-32 bg-slate-900 text-white p-2 rounded-lg text-[10px] opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50">
-                          <div className="flex justify-between"><span>{t.arrival}:</span> <span>{p.arrivalTime}</span></div>
-                          <div className="flex justify-between"><span>{t.burst}:</span> <span>{p.burstTime}</span></div>
-                          <div className="flex justify-between"><span>{t.priority}:</span> <span>{p.priority}</span></div>
+              <div className="relative h-full flex items-center gap-4 overflow-x-auto scrollbar-hide px-2">
+                <AnimatePresence mode="popLayout">
+                  {readyQueue.length === 0 ? (
+                    <motion.div
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 0.5 }}
+                      exit={{ opacity: 0 }}
+                      className="w-full flex flex-col items-center justify-center gap-2"
+                    >
+                      <Server size={32} className="text-slate-300 dark:text-slate-600" />
+                      <span className="text-slate-400 text-xs uppercase font-medium">{t.noReady}</span>
+                    </motion.div>
+                  ) : (
+                    readyQueue.map((pid, idx) => {
+                      const p = processes.find(proc => proc.id === pid)!;
+                      return (
+                        <div key={`${pid}`} className="relative group">
+                          {/* Connection Line */}
+                          {idx < readyQueue.length - 1 && (
+                            <div className="absolute top-1/2 -right-4 w-4 h-0.5 bg-slate-300 dark:bg-slate-600 z-0"></div>
+                          )}
+                          <ProcessCard process={p} variant="queue" layoutId={p.id} />
                         </div>
-                      </div>
-                    </div>
-                  );
-                })
-              )}
+                      );
+                    })
+                  )}
+                </AnimatePresence>
+              </div>
             </div>
           </div>
         </div>

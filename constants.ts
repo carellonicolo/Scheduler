@@ -24,6 +24,17 @@ export const PROCESS_COLORS = [
   '#c4b5fd', // Violet 300
   '#f0abfc', // Fuchsia 300
   '#fda4af', // Rose 300
+  // Darker/More variants
+  '#4f46e5', // Indigo 600
+  '#059669', // Emerald 600
+  '#0284c7', // Sky 600
+  '#65a30d', // Lime 600
+  '#7c3aed', // Violet 600
+  '#db2777', // Pink 600
+  '#dc2626', // Red 600
+  '#ea580c', // Orange 600
+  '#ca8a04', // Yellow 600
+  '#16a34a', // Green 600
 ];
 
 export const INITIAL_PROCESSES = [
@@ -46,6 +57,7 @@ export const TRANSLATIONS = {
     subtitle: 'Powered by Prof. Carello',
     processInput: 'Input Processi',
     active: 'Attivi',
+    processes: 'Processi',
     arrival: 'Arrivo',
     burst: 'Burst',
     priority: 'Priorità',
@@ -58,6 +70,7 @@ export const TRANSLATIONS = {
     rem: 'Rimanente',
     waitingForProcess: 'In attesa di processi...',
     readyQueue: 'Coda Pronti',
+    incomingQueue: 'Processi in Arrivo',
     pending: 'In attesa',
     noReady: 'Nessun processo pronto',
     timeline: 'Timeline Esecuzione',
@@ -80,6 +93,8 @@ export const TRANSLATIONS = {
     timeQuantum: 'Quantum di Tempo',
     speed: 'Velocità',
     step: 'Passo',
+    start: 'Avvia',
+    pause: 'Pausa',
     reset: 'Reset',
     lang: 'Lingua',
     algoNames: {
@@ -107,6 +122,12 @@ export const TRANSLATIONS = {
       SRTF: 'Shortest Remaining Time First (SRTF) è la versione "preemptive" di SJF. Se arriva un nuovo processo con un tempo di esecuzione residuo inferiore a quello del processo attualmente in esecuzione, il processo corrente viene interrotto e la CPU viene assegnata al nuovo arrivato. È ottimale per minimizzare il tempo di attesa medio.',
       RR: 'Round Robin (RR) è progettato per sistemi time-sharing. A ogni processo viene assegnata una piccola unità di tempo chiamata "Quantum". La CPU cicla attraverso i processi pronti. Se un processo non termina entro il suo quantum, viene interrotto e rimesso in coda. Garantisce che nessun processo monopolizzi la CPU e offre una buona risposta interattiva.',
       PRIORITY: 'Priority Scheduling assegna la CPU al processo con la priorità più alta (nel nostro caso, il numero più basso indica priorità più alta). Se due processi hanno la stessa priorità, vengono eseguiti in ordine FCFS. Attenzione: i processi a bassa priorità potrebbero soffrire di "starvation" (non venire mai eseguiti) se continuano ad arrivare processi ad alta priorità.'
+    },
+    statInfo: {
+      avgWaitTitle: 'Tempo di Attesa Medio',
+      avgWaitDesc: 'È la media del tempo trascorso da ciascun processo nella coda dei processi pronti (Ready Queue) in attesa di essere eseguito dalla CPU. Un valore basso indica che i processi passano poco tempo in attesa, il che è generalmente desiderabile. Un tempo di attesa elevato può indicare un sistema sovraccarico o un algoritmo di scheduling inefficiente per il carico corrente.',
+      avgTaTitle: 'Tempo di Turnaround Medio',
+      avgTaDesc: 'È la media del tempo totale trascorso dalla creazione del processo al suo completamento. Include il tempo di attesa in coda e il tempo di esecuzione effettivo (Burst Time). Un valore basso indica che il sistema elabora i processi rapidamente. È una metrica critica per le prestazioni percepite dall\'utente.'
     }
   },
   EN: {
@@ -114,6 +135,7 @@ export const TRANSLATIONS = {
     subtitle: 'Powered by Prof. Carello',
     processInput: 'Process Input',
     active: 'Active',
+    processes: 'Processes',
     arrival: 'Arrival',
     burst: 'Burst',
     priority: 'Priority',
@@ -126,6 +148,7 @@ export const TRANSLATIONS = {
     rem: 'Rem',
     waitingForProcess: 'Waiting for process...',
     readyQueue: 'Ready Queue',
+    incomingQueue: 'Incoming Processes',
     pending: 'Pending',
     noReady: 'No processes ready',
     timeline: 'Execution Timeline',
@@ -148,6 +171,8 @@ export const TRANSLATIONS = {
     timeQuantum: 'Time Quantum',
     speed: 'Speed',
     step: 'Step',
+    start: 'Start',
+    pause: 'Pause',
     reset: 'Reset',
     lang: 'Language',
     algoNames: {
@@ -175,6 +200,12 @@ export const TRANSLATIONS = {
       SRTF: 'Shortest Remaining Time First (SRTF) is the "preemptive" version of SJF. If a new process arrives with a remaining execution time shorter than the current running process, the current process is interrupted and the CPU is assigned to the newcomer. It is optimal for minimizing average waiting time.',
       RR: 'Round Robin (RR) is designed for time-sharing systems. Each process is assigned a small unit of time called a "Quantum". The CPU cycles through the ready processes. If a process does not finish within its quantum, it is interrupted and placed back in the queue. It ensures no process monopolizes the CPU and provides good interactive response.',
       PRIORITY: 'Priority Scheduling assigns the CPU to the process with the highest priority (in our case, lower number indicates higher priority). If two processes have the same priority, they are executed in FCFS order. Warning: low-priority processes may suffer from "starvation" (never executing) if high-priority processes keep arriving.'
+    },
+    statInfo: {
+      avgWaitTitle: 'Average Waiting Time',
+      avgWaitDesc: 'The average time each process spends in the ready queue waiting to be executed by the CPU. A lower value indicates that processes spend less time waiting, which is generally desirable. High waiting time can indicate a system overload or an inefficient scheduling algorithm.',
+      avgTaTitle: 'Average Turnaround Time',
+      avgTaDesc: 'The average total time elapsed from the creation of the process to its completion. It includes waiting time in the queue and actual execution time (Burst Time). A lower value indicates that the system processes jobs quickly. This is a critical metric for user-perceived performance.'
     }
   }
 };

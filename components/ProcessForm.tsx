@@ -1,5 +1,6 @@
 
 import React, { useState, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { Plus, Trash2, List, X, Check, ChevronDown, ChevronUp, HelpCircle, Clock, Cpu, Flag } from 'lucide-react';
 import { PROCESS_COLORS } from '../constants.ts';
 import { Process } from '../types.ts';
@@ -110,20 +111,40 @@ const ProcessColorPicker = ({
   disabled: boolean
 }) => {
   const [open, setOpen] = useState(false);
+  const [dropdownPos, setDropdownPos] = useState({ top: 0, left: 0 });
+  const buttonRef = useRef<HTMLButtonElement>(null);
+
+  const toggleOpen = () => {
+    if (disabled) return;
+    if (!open && buttonRef.current) {
+      const rect = buttonRef.current.getBoundingClientRect();
+      setDropdownPos({
+        top: rect.bottom + 4,
+        left: rect.left
+      });
+      setOpen(true);
+    } else {
+      setOpen(false);
+    }
+  };
 
   return (
     <div className="relative">
       <button
+        ref={buttonRef}
         type="button"
-        onClick={() => !disabled && setOpen(!open)}
+        onClick={toggleOpen}
         disabled={disabled}
         className="w-4 h-4 rounded-full shrink-0 shadow-sm hover:scale-110 transition-transform border border-white/50 dark:border-slate-600"
         style={{ backgroundColor: currentColor }}
       />
-      {open && (
+      {open && createPortal(
         <>
-          <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
-          <div className="absolute left-0 top-full mt-1 z-20 bg-white dark:bg-slate-800 rounded-lg p-2 shadow-xl border border-slate-200 dark:border-slate-700 grid grid-cols-5 gap-1 min-w-[100px]">
+          <div className="fixed inset-0 z-[60]" onClick={() => setOpen(false)} />
+          <div
+            className="fixed z-[70] bg-white dark:bg-slate-800 rounded-lg p-2 shadow-xl border border-slate-200 dark:border-slate-700 grid grid-cols-5 gap-1 min-w-[100px]"
+            style={{ top: dropdownPos.top, left: dropdownPos.left }}
+          >
             {PROCESS_COLORS.map((c) => (
               <button
                 key={c}
@@ -136,7 +157,8 @@ const ProcessColorPicker = ({
               </button>
             ))}
           </div>
-        </>
+        </>,
+        document.body
       )}
     </div>
   );
@@ -227,6 +249,7 @@ export const ProcessForm: React.FC<ProcessFormProps> = ({ processes, onAddProces
   const [priority, setPriority] = useState(1);
   const [selectedColor, setSelectedColor] = useState(PROCESS_COLORS[processes.length % PROCESS_COLORS.length]);
   const [colorPickerOpen, setColorPickerOpen] = useState(false);
+  const [colorPickerPos, setColorPickerPos] = useState({ top: 0, left: 0 });
   const [helpOpen, setHelpOpen] = useState(false);
   const colorBtnRef = useRef<HTMLButtonElement>(null);
 
@@ -306,7 +329,15 @@ export const ProcessForm: React.FC<ProcessFormProps> = ({ processes, onAddProces
             <button
               ref={colorBtnRef}
               type="button"
-              onClick={() => setColorPickerOpen(!colorPickerOpen)}
+              onClick={() => {
+                if (colorPickerOpen) {
+                  setColorPickerOpen(false);
+                } else if (colorBtnRef.current) {
+                  const rect = colorBtnRef.current.getBoundingClientRect();
+                  setColorPickerPos({ top: rect.bottom + 4, left: rect.left });
+                  setColorPickerOpen(true);
+                }
+              }}
               disabled={disabled}
               className="w-6 h-6 rounded-full border-2 border-white dark:border-slate-700 shadow-sm hover:scale-110 transition-transform flex items-center justify-center"
               style={{ backgroundColor: selectedColor }}
@@ -314,10 +345,13 @@ export const ProcessForm: React.FC<ProcessFormProps> = ({ processes, onAddProces
               <ChevronDown size={10} className="text-white drop-shadow" />
             </button>
 
-            {colorPickerOpen && (
+            {colorPickerOpen && createPortal(
               <>
-                <div className="fixed inset-0 z-10" onClick={() => setColorPickerOpen(false)} />
-                <div className="absolute left-0 top-full mt-1 z-20 bg-white dark:bg-slate-800 rounded-lg p-2 shadow-xl border border-slate-200 dark:border-slate-700 grid grid-cols-5 gap-1.5 min-w-[120px]">
+                <div className="fixed inset-0 z-[60]" onClick={() => setColorPickerOpen(false)} />
+                <div
+                  className="fixed z-[70] bg-white dark:bg-slate-800 rounded-lg p-2 shadow-xl border border-slate-200 dark:border-slate-700 grid grid-cols-5 gap-1.5 min-w-[120px]"
+                  style={{ top: colorPickerPos.top, left: colorPickerPos.left }}
+                >
                   {PROCESS_COLORS.map((c) => (
                     <button
                       key={c}
@@ -330,7 +364,8 @@ export const ProcessForm: React.FC<ProcessFormProps> = ({ processes, onAddProces
                     </button>
                   ))}
                 </div>
-              </>
+              </>,
+              document.body
             )}
           </div>
 

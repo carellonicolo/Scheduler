@@ -8,6 +8,7 @@ import { ProcessForm } from './components/ProcessForm.tsx';
 import { Visualizer } from './components/Visualizer.tsx';
 import { StatsTable } from './components/StatsTable.tsx';
 import { AlgoHelpModal } from './components/AlgoHelpModal.tsx';
+import { Tooltip } from './components/Tooltip.tsx';
 import { LanguageProvider, useLanguage } from './contexts/LanguageContext.tsx';
 
 const MainApp: React.FC = () => {
@@ -438,31 +439,35 @@ const MainApp: React.FC = () => {
 
           {/* Playback Controls */}
           <div className="flex items-center gap-2 flex-shrink-0">
-            <button
-              onClick={handleStep}
-              disabled={isPlaying || schedulerState.isFinished}
-              className="p-3 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors disabled:opacity-30 active:scale-95 group relative"
-            >
-              <StepForward size={20} />
-              <span className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 px-2 py-1 bg-slate-800 text-white text-[10px] rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">{t.step}</span>
-            </button>
+            <Tooltip content={t.step}>
+              <button
+                onClick={handleStep}
+                disabled={isPlaying || schedulerState.isFinished}
+                className="p-3 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors disabled:opacity-30 active:scale-95 group relative"
+              >
+                <StepForward size={20} />
+              </button>
+            </Tooltip>
 
-            <button
-              onClick={togglePlay}
-              disabled={schedulerState.isFinished}
-              className={`p-4 rounded-xl text-white shadow-lg transition-all transform active:scale-90 flex items-center justify-center
-                    ${isPlaying ? 'bg-amber-500 hover:bg-amber-400 shadow-amber-500/30' : 'bg-indigo-600 hover:bg-indigo-500 shadow-indigo-600/30'}`}
-            >
-              {isPlaying ? <Pause size={24} fill="currentColor" /> : <Play size={24} fill="currentColor" />}
-            </button>
-
-            <button
-              onClick={handleReset}
-              className="p-3 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors active:scale-95 group relative"
-            >
-              <RotateCcw size={20} />
-              <span className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 px-2 py-1 bg-slate-800 text-white text-[10px] rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">{t.reset}</span>
-            </button>
+            <Tooltip content={isPlaying ? t.pause : t.start}>
+              <button
+                onClick={togglePlay}
+                disabled={schedulerState.isFinished}
+                className={`p-4 rounded-xl text-white shadow-lg transition-all transform active:scale-90 flex items-center justify-center
+                      ${isPlaying ? 'bg-amber-500 hover:bg-amber-400 shadow-amber-500/30' : 'bg-indigo-600 hover:bg-indigo-500 shadow-indigo-600/30'}`}
+              >
+                {isPlaying ? <Pause size={24} fill="currentColor" /> : <Play size={24} fill="currentColor" />}
+              </button>
+            </Tooltip>
+            {/* Reset Button */}
+            <Tooltip content={t.reset}>
+              <button
+                onClick={handleReset}
+                className="p-3 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:bg-red-100 hover:text-red-500 dark:hover:bg-red-900/40 dark:hover:text-red-400 transition-all active:scale-95 border border-transparent hover:border-red-200 dark:hover:border-red-800"
+              >
+                <RotateCcw size={20} />
+              </button>
+            </Tooltip>
           </div>
 
           {/* Speed Control */}
