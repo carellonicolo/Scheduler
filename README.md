@@ -11,84 +11,213 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](LICENSE)
 [![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg?style=for-the-badge)](https://github.com/carellonicolo/Scheduler/graphs/commit-activity)
 
-An advanced, interactive, and visually stunning CPU Scheduler Simulator designed to help students and developers understand operating system scheduling algorithms.
+**The Ultimate Educational Tool for Operating System Scheduling Algorithms.**
 
-[View Demo](https://ai.studio/apps/drive/1MH8EjZIbJ_kbpJ-SrdaDNvuzIFQxAbwV) · [Report Bug](.github/ISSUE_TEMPLATE/bug_report.md) · [Request Feature](.github/ISSUE_TEMPLATE/feature_request.md)
+[View Live Demo](https://ai.studio/apps/drive/1MH8EjZIbJ_kbpJ-SrdaDNvuzIFQxAbwV) · [Report Bug](.github/ISSUE_TEMPLATE/bug_report.md) · [Request Feature](.github/ISSUE_TEMPLATE/feature_request.md)
 
 </div>
 
+---
+
+## 📖 Table of Contents
+
+1.  [About The Project](#-about-the-project)
+2.  [Key Features](#-key-features)
+3.  [Supported Algorithms](#-supported-algorithms)
+    *   [Non-Preemptive](#non-preemptive-algorithms)
+    *   [Preemptive](#preemptive-algorithms)
+4.  [Technical Architecture](#-technical-architecture)
+5.  [Getting Started](#-getting-started)
+6.  [Usage Guide](#-usage-guide)
+7.  [Contributing](#-contributing)
+8.  [License](#-license)
+9.  [Contact & Acknowledgments](#-contact--acknowledgments)
+
+---
+
 ## 📖 About The Project
 
-CPU scheduling is a core concept in operating systems that typically involves complex algorithms and abstract logic. This project changes that by providing a **real-time visualizer** where users can see exactly how processes are managed by the CPU.
+**CPU Scheduler Simulator** is an advanced, interactive, and visually stunning web application designed to bridge the gap between theoretical operating system concepts and practical understanding.
 
-Whether you're a student learning about FCFS or a developer exploring Round Robin time slices, this simulator brings the theory to life.
+In a modern OS, the CPU scheduler is the component that decides which process runs at any given point in time. It is responsible for maximizing CPU utilization and throughput while minimizing waiting time, turnaround time, and response time. This simulator allows you to:
+*   **Visualize** how different algorithms make decisions in real-time.
+*   **Experiment** with edge cases (starvation, convoy effect).
+*   **Analyze** performance metrics to objectively compare algorithms.
 
-### Key Features
+Whether you are a Computer Science student, a professor, or a self-taught developer, this tool provides the most intuitive way to master process scheduling.
 
-*   **Interactive Simulation**: Add processes dynamically, control time steps, and watch the queues update in real-time.
-*   **Multiple Algorithms**: Supports First Come First Serve (FCFS), Shortest Job First (SJF), Round Robin (RR), Priority Scheduling, and more.
-*   **Detailed Analytics**: Visual charts and tables comparing Turnaround Time, Waiting Time, and CPU Utilization.
-*   **Modern UI/UX**: Built with a sleek, dark-themed interface using Tailwind CSS and Framer Motion for smooth animations.
-*   **Step-by-Step Execution**: Pause, play, and step through the simulation to catch every detail.
+## 🌟 Key Features
 
-## 🛠️ Built With
+### 🖥️ Real-Time Visualization
+Unlike static diagrams, this simulator features a dynamic **Gantt Chart** that builds up second-by-second. Watch processes move from the *Incoming Queue* to the *Ready Queue*, then to the *CPU*, and finally to the *Completed State*.
 
-*   **[React](https://reactjs.org/)** - For building the user interface.
-*   **[TypeScript](https://www.typescriptlang.org/)** - For type-safe code and better developer experience.
-*   **[Vite](https://vitejs.dev/)** - For lightning-fast build and development server.
-*   **[Tailwind CSS](https://tailwindcss.com/)** - For utility-first styling.
-*   **[Framer Motion](https://www.framer.com/motion/)** - For complex animations and gestures.
-*   **[Lucide React](https://lucide.dev/)** - For beautiful icons.
+### ⚡ Step-by-Step Execution
+Debugging an algorithm in your head is hard.
+- **Play Mode**: Watch the simulation unfold at adjustable speeds.
+- **Step Mode**: Pause time and advance one clock cycle at a time to analyze the exact state of the system (Critical for understanding Preemption).
+
+### 🤖 AI-Powered Insights
+Integrated with **Google Gemini AI**, the simulator doesn't just show you *what* happened, but explains *why*.
+- Click "Generate Insight" after a run.
+- The AI analyzes your specific dataset and explains inefficiencies (e.g., "Process P1 caused a convoy effect because...") or commends the schedule's optimality.
+
+### 📊 Comprehensive Analytics
+Data-driven learning is effective learning. The app calculates:
+- **Turnaround Time (TAT)**: Completion Time - Arrival Time.
+- **Waiting Time (WT)**: Turnaround Time - Burst Time.
+- **CPU Utilization**: Percentage of time the CPU was busy.
+- **Throughput**: Number of processes completed per time unit.
+
+### 🎨 Modern & Accessible UI
+Built with **Tailwind CSS** and **Framer Motion**, the interface enables:
+- **Dark/Light Mode** support.
+- **Fluid Animations** for all state transitions.
+- **Responsive Design** that works on tablets and desktops.
+
+---
+
+## 🧠 Supported Algorithms
+
+We support a comprehensive suite of 9 algorithms, covering both classic and advanced scheduling strategies.
+
+### Non-Preemptive Algorithms
+*In these algorithms, once a process gets the CPU, it keeps it until it terminates or performs I/O.*
+
+1.  **First Come First Serve (FCFS)**
+    *   **Logic**: Serves processes in the exact order they arrive.
+    *   **Pros**: Simple to implement, fair (no starvation).
+    *   **Cons**: Susceptible to the **Convoy Effect**, where short processes wait behind a long one, drastically increasing Average Waiting Time.
+
+2.  **Shortest Job First (SJF)**
+    *   **Logic**: Selects the process with the smallest Burst Time.
+    *   **Pros**: PROVABLY optimal for minimizing Average Waiting Time.
+    *   **Cons**: Requires knowing Burst Time in advance; causes **Starvation** for long processes if short ones keep arriving.
+
+3.  **Priority Scheduling (Non-Preemptive)**
+    *   **Logic**: Selects the process with the highest priority (Lower Number = Higher Priority).
+    *   **Pros**: Useful for systems where certain tasks are critical (e.g., Kernel tasks).
+    *   **Cons**: Indefinite blocking (Starvation) for low-priority processes.
+
+4.  **Highest Response Ratio Next (HRRN)**
+    *   **Logic**: Calculates `Response Ratio = (Waiting Time + Burst Time) / Burst Time`. Selects process with highest ratio.
+    *   **Pros**: Solves the starvation problem of SJF! As a process waits, its ratio increases, eventually ensuring it gets picked.
+    *   **Cons**: Overhead of calculating ratio at every context switch.
+
+5.  **Longest Job First (LJF)**
+    *   **Logic**: Selects the process with the largest Burst Time.
+    *   **Pros**: None in general purpose systems (educational use only).
+    *   **Cons**: Maximizes Average Waiting Time (Opposite of SJF).
+
+### Preemptive Algorithms
+*The CPU can be taken away from a running process if a "more important" process arrives.*
+
+6.  **Round Robin (RR)**
+    *   **Logic**: Each process gets a fixed time slice (**Quantum**). If it doesn't finish, it goes to the back of the queue.
+    *   **Pros**: Best for Time-Sharing systems; good Response Time.
+    *   **Cons**: Performance depends heavily on Quantum size. (Too small = High Context Switch overhead; Too large = Degrades to FCFS).
+
+7.  **Shortest Remaining Time First (SRTF)**
+    *   **Logic**: The Preemptive version of SJF. If a new process arrives with a remaining time less than the current process's remaining time, it preempts.
+    *   **Pros**: Minimal Average Waiting Time.
+    *   **Cons**: High overhead; Starvation of long processes.
+
+8.  **Priority Scheduling (Preemptive)**
+    *   **Logic**: If a process arrives with a higher priority than the currently running one, it preempts.
+    *   **Pros**: Ensures critical tasks are handled immediately.
+    *   **Cons**: Starvation.
+
+9.  **Longest Remaining Time First (LRTF)**
+    *   **Logic**: Preemptive version of LJF.
+    *   **Pros**: Educational value.
+    *   **Cons**: Poor performance metrics.
+
+---
+
+## 🏗️ Technical Architecture
+
+This project demonstrates a modern, scalable frontend architecture.
+
+### Core Stack
+*   **Vite**: For next-generation tooling and instant server start.
+*   **React 18**: Utilizing functional components, Hooks (`useEffect`, `useContext`, `useMemo`), and strict typing.
+*   **TypeScript**: Ensures type safety across the complex Scheduler State objects (`Process`, `GanttBlock`, `SchedulerState`).
+*   **Tailwind CSS**: For utility-first, maintainable styling.
+
+### Simulation Engine (`services/schedulerLogic.ts`)
+The heart of the application is a **pure function** state machine:
+`stepSimulation(currentState, algorithm) -> nextState`
+
+This design ensures:
+1.  **Determinism**: The same inputs always yield the same simulation.
+2.  **Time Travel**: We can easily implement "Undo" or "Step Back" (planned feature) because state is immutable.
+3.  **Separation of Concerns**: The logic is completely decoupled from the UI.
+
+### Custom Hooks
+*   `useScheduler`: Manages the timer loop and dispatching of simulation steps.
+*   `useLanguage`: Handles internationalization (i18n) for Italian and English support.
+
+---
 
 ## 🚀 Getting Started
 
-Follow these steps to get a local copy up and running.
-
-### Prerequisites
-
-*   Node.js (v16+)
-*   npm
+To run this project locally, you'll need **Node.js** (v16 or higher) installed.
 
 ### Installation
 
-1.  **Clone the repository**
-    ```sh
+1.  **Clone the Repository**
+    ```bash
     git clone https://github.com/carellonicolo/Scheduler.git
-    ```
-
-2.  **Navigate to the project directory**
-    ```sh
     cd Scheduler
     ```
 
-3.  **Install dependencies**
-    ```sh
+2.  **Install Dependencies**
+    ```bash
     npm install
+    # or
+    yarn install
     ```
 
-4.  **Set up Environment Variables**
-    Create a `.env.local` file in the root directory and add your Gemini API key if you plan to use AI features (optional but recommended for full experience).
+3.  **Environment Setup (Optional)**
+    To enable the AI Insights feature, you need a Google Gemini API Key.
+    Create a `.env.local` file:
     ```env
-    VITE_GEMINI_API_KEY=your_api_key_here
+    VITE_GEMINI_API_KEY=your_actual_api_key_here
     ```
 
-5.  **Run the development server**
-    ```sh
+4.  **Start Dev Server**
+    ```bash
     npm run dev
     ```
+    Open `http://localhost:5173` in your browser.
 
-## 🎮 Usage
+---
 
-1.  **Select Algorithm**: Choose a scheduling algorithm from the dropdown menu (e.g., FCFS, Round Robin).
-2.  **Add Processes**: Use the input panel to add processes with specific Arrival Times, Burst Times, and Priorities.
-3.  **Start Simulation**: Click the "Start" button to begin the visual execution.
-4.  **Analyze**: Watch the Gantt chart populate and review the calculated metrics in the analytics tab.
+## 🎮 Usage Guide
+
+### Defines Processes
+1.  Use the **Sidebar Input**.
+2.  Set **Arrival Time** (0 = starts immediately).
+3.  Set **Burst Time** (Duration).
+4.  Set **Priority** (Only for Priority algorithms).
+5.  Click `Add Process` or use `Load Example` to auto-fill a scenario.
+
+### Run Simulation
+1.  Select an **Algorithm** from the bottom toolbar.
+2.  If selecting **Round Robin**, adjust the **Time Quantum**.
+3.  Click `▶ Play` to run or `⏯ Step` to move slowly.
+4.  Adjust **Speed** slider to visualize context switches clearly.
+
+### Analyze
+1.  Watch the **Gantt Chart** populate.
+2.  Check the **Stats Table** for coloring-coded metrics.
+3.  Click **"Generate Insight"** to ask the AI for a performance report.
+
+---
 
 ## 🤝 Contributing
 
-Contributions are what make the open-source community such an amazing place to learn, inspire, and create. Any contributions you make are **greatly appreciated**.
-
-Please refer to the [CONTRIBUTING.md](CONTRIBUTING.md) file for more details.
+Capabilities are limitless when we work together.
+Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details on our code of conduct, and the process for submitting pull requests.
 
 1.  Fork the Project
 2.  Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
@@ -96,21 +225,20 @@ Please refer to the [CONTRIBUTING.md](CONTRIBUTING.md) file for more details.
 4.  Push to the Branch (`git push origin feature/AmazingFeature`)
 5.  Open a Pull Request
 
+---
+
 ## 🛡️ License
 
 Distributed under the MIT License. See `LICENSE` for more information.
 
-## 👥 Authors
+## 📞 Contact & Acknowledgments
 
-*   **Nicolò Carello** - *Initial work* - [carellonicolo](https://github.com/carellonicolo)
+**Nicolò Carello** - [GitHub Profile](https://github.com/carellonicolo)
 
-## 🙏 Acknowledgments
-
-*   Thanks to all the contributors who have improved this project.
-*   Inspired by standard OS concepts taught in computer science curricula.
+*   Special thanks to the open-source community for the icons (Lucide) and UI libraries.
+*   Inspired by the classic "Dinosaur Book" (Operating System Concepts by Silberschatz).
 
 ---
-
 <div align="center">
-    <p>Made with ❤️ by Nicolò Carello</p>
+  <sub>Built with ❤️ and ☕ by Nicolò Carello.</sub>
 </div>
