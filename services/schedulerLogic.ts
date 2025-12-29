@@ -82,7 +82,34 @@ export const stepSimulation = (currentState: SchedulerState, algo: AlgorithmType
         currentP.state = 'ready';
         next.readyQueue.push(currentP.id); // Put back
         next.currentProcessId = null; // Will pick new one below
-        // Note: SRTF usually re-evaluates the whole queue, implemented below
+      }
+    }
+    // Check Preemption for PRIORITY_P (Preemptive Priority - higher priority arrives)
+    else if (algo === 'PRIORITY_P') {
+      // Look for a process in ready queue with strictly higher priority (lower number)
+      const potentialPreempt = next.readyQueue.find(pid => {
+        const p = next.processes.find(proc => proc.id === pid)!;
+        return p.priority < currentP.priority;
+      });
+
+      if (potentialPreempt) {
+        currentP.state = 'ready';
+        next.readyQueue.push(currentP.id); // Put back
+        next.currentProcessId = null; // Will pick new one below
+      }
+    }
+    // Check Preemption for LRTF (Longest Remaining Time First - longer job arrives)
+    else if (algo === 'LRTF') {
+      // Look for a process in ready queue with strictly more remaining time
+      const potentialPreempt = next.readyQueue.find(pid => {
+        const p = next.processes.find(proc => proc.id === pid)!;
+        return p.remainingTime > currentP.remainingTime;
+      });
+
+      if (potentialPreempt) {
+        currentP.state = 'ready';
+        next.readyQueue.push(currentP.id); // Put back
+        next.currentProcessId = null; // Will pick new one below
       }
     }
   }
@@ -129,8 +156,8 @@ export const stepSimulation = (currentState: SchedulerState, algo: AlgorithmType
           break;
 
         case 'PRIORITY':
-          // Lower number = Higher Priority (Unix style) or Higher = Higher?
-          // Let's assume Lower Number = Higher Priority
+        case 'PRIORITY_P': // Same selection logic as PRIORITY, preemption handled above
+          // Lower number = Higher Priority
           let minPriority = Infinity;
           next.readyQueue.forEach((pid, idx) => {
             const p = next.processes.find(proc => proc.id === pid)!;
@@ -139,6 +166,69 @@ export const stepSimulation = (currentState: SchedulerState, algo: AlgorithmType
               selectedId = pid;
               selectedIndex = idx;
             } else if (p.priority === minPriority) {
+              // FCFS tie breaker
+              const currentSelected = next.processes.find(proc => proc.id === selectedId)!;
+              if (p.arrivalTime < currentSelected.arrivalTime) {
+                selectedId = pid;
+                selectedIndex = idx;
+              }
+            }
+          });
+          break;
+
+        case 'HRRN': // Highest Response Ratio Next
+          // Response Ratio = (Waiting Time + Burst Time) / Burst Time
+          // Waiting Time = Current Time - Arrival Time (for ready processes)
+          let maxRatio = -Infinity;
+          next.readyQueue.forEach((pid, idx) => {
+            const p = next.processes.find(proc => proc.id === pid)!;
+            const waitingTime = currentTime - p.arrivalTime;
+            const responseRatio = (waitingTime + p.burstTime) / p.burstTime;
+            if (responseRatio > maxRatio) {
+              maxRatio = responseRatio;
+              selectedId = pid;
+              selectedIndex = idx;
+            } else if (responseRatio === maxRatio) {
+              // FCFS tie breaker
+              const currentSelected = next.processes.find(proc => proc.id === selectedId)!;
+              if (p.arrivalTime < currentSelected.arrivalTime) {
+                selectedId = pid;
+                selectedIndex = idx;
+              }
+            }
+          });
+          break;
+
+        case 'LJF': // Longest Job First (Non-preemptive)
+          // Select process with longest burst time
+          let maxBurst = -Infinity;
+          next.readyQueue.forEach((pid, idx) => {
+            const p = next.processes.find(proc => proc.id === pid)!;
+            if (p.burstTime > maxBurst) {
+              maxBurst = p.burstTime;
+              selectedId = pid;
+              selectedIndex = idx;
+            } else if (p.burstTime === maxBurst) {
+              // FCFS tie breaker
+              const currentSelected = next.processes.find(proc => proc.id === selectedId)!;
+              if (p.arrivalTime < currentSelected.arrivalTime) {
+                selectedId = pid;
+                selectedIndex = idx;
+              }
+            }
+          });
+          break;
+
+        case 'LRTF': // Longest Remaining Time First (Preemptive)
+          // Select process with longest remaining time
+          let maxRemaining = -Infinity;
+          next.readyQueue.forEach((pid, idx) => {
+            const p = next.processes.find(proc => proc.id === pid)!;
+            if (p.remainingTime > maxRemaining) {
+              maxRemaining = p.remainingTime;
+              selectedId = pid;
+              selectedIndex = idx;
+            } else if (p.remainingTime === maxRemaining) {
               // FCFS tie breaker
               const currentSelected = next.processes.find(proc => proc.id === selectedId)!;
               if (p.arrivalTime < currentSelected.arrivalTime) {

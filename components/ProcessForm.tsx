@@ -1,7 +1,7 @@
 
 import React, { useState, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { Plus, Trash2, List, X, Check, ChevronDown, ChevronUp, HelpCircle, Clock, Cpu, Flag } from 'lucide-react';
+import { Plus, Trash2, List, X, Check, ChevronDown, ChevronUp, HelpCircle, Clock, Cpu, Flag, Lightbulb } from 'lucide-react';
 import { PROCESS_COLORS } from '../constants.ts';
 import { Process } from '../types.ts';
 import { useLanguage } from '../contexts/LanguageContext.tsx';
@@ -12,6 +12,8 @@ interface ProcessFormProps {
   onUpdateProcess: (id: string, p: Partial<Process>) => void;
   onDeleteProcess: (id: string) => void;
   onClear: () => void;
+  onLoadExample?: () => void;
+  algorithm?: string;
   disabled: boolean;
 }
 
@@ -242,7 +244,7 @@ const HelpModal = ({ onClose }: { onClose: () => void }) => {
   );
 };
 
-export const ProcessForm: React.FC<ProcessFormProps> = ({ processes, onAddProcess, onUpdateProcess, onDeleteProcess, onClear, disabled }) => {
+export const ProcessForm: React.FC<ProcessFormProps> = ({ processes, onAddProcess, onUpdateProcess, onDeleteProcess, onClear, onLoadExample, algorithm, disabled }) => {
   const [name, setName] = useState('');
   const [arrivalTime, setArrivalTime] = useState(0);
   const [burstTime, setBurstTime] = useState(1);
@@ -468,6 +470,25 @@ export const ProcessForm: React.FC<ProcessFormProps> = ({ processes, onAddProces
           )}
         </div>
       </div>
+
+      {/* Load Example Button */}
+      {onLoadExample && (
+        <div className="shrink-0 group relative">
+          <button
+            onClick={onLoadExample}
+            disabled={disabled}
+            className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 disabled:from-slate-400 disabled:to-slate-500 text-white font-bold rounded-xl shadow-lg shadow-amber-500/30 hover:shadow-xl hover:shadow-amber-500/40 transition-all active:scale-[0.98] text-sm"
+          >
+            <Lightbulb size={18} />
+            <span>{t.loadExample}</span>
+          </button>
+          {/* Tooltip */}
+          <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 bg-slate-800 text-white text-xs px-3 py-2 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shadow-xl border border-slate-700 z-30 text-center">
+            {t.loadExampleDesc}
+            <div className="w-2 h-2 bg-slate-800 border-r border-b border-slate-700 rotate-45 absolute -bottom-1 left-1/2 -translate-x-1/2"></div>
+          </div>
+        </div>
+      )}
 
       {/* Help Modal */}
       {helpOpen && <HelpModal onClose={() => setHelpOpen(false)} />}

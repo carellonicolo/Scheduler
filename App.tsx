@@ -1,13 +1,14 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Play, Pause, RotateCcw, Plus, Trash2, Github, Moon, Sun, BarChart3, Settings, ChevronUp, Check, BrainCircuit, X, StepForward, HelpCircle, Activity, Globe, Layout, Cpu } from 'lucide-react';
 import { Process, AlgorithmType, SchedulerState, AnalysisReport, Language } from './types.ts';
-import { INITIAL_PROCESSES, ALGORITHMS } from './constants.ts';
+import { INITIAL_PROCESSES, ALGORITHMS, ALGORITHM_EXAMPLES } from './constants.ts';
 import { stepSimulation, resetSimulation } from './services/schedulerLogic.ts';
 import { analyzeSimulation } from './services/geminiService.ts';
 import { ProcessForm } from './components/ProcessForm.tsx';
 import { Visualizer } from './components/Visualizer.tsx';
 import { StatsTable } from './components/StatsTable.tsx';
 import { AlgoHelpModal } from './components/AlgoHelpModal.tsx';
+import { AppHelpModal } from './components/AppHelpModal.tsx';
 import { Tooltip } from './components/Tooltip.tsx';
 import { LanguageProvider, useLanguage } from './contexts/LanguageContext.tsx';
 
@@ -27,6 +28,7 @@ const MainApp: React.FC = () => {
   const [simulationSpeed, setSimulationSpeed] = useState(1000);
   const [isAlgoDropdownOpen, setIsAlgoDropdownOpen] = useState(false);
   const [isAlgoHelpOpen, setIsAlgoHelpOpen] = useState(false);
+  const [isAppHelpOpen, setIsAppHelpOpen] = useState(false);
 
   // Ref for positioning the fixed dropdown
   const algoBtnRef = useRef<HTMLButtonElement>(null);
@@ -106,6 +108,32 @@ const MainApp: React.FC = () => {
     setIsPlaying(false);
     setBaseProcesses([]);
     setSchedulerState(resetSimulation([], quantum));
+    setAnalysis(null);
+  };
+
+  const handleLoadExample = () => {
+    const examples = ALGORITHM_EXAMPLES[algorithm as keyof typeof ALGORITHM_EXAMPLES];
+    if (!examples) return;
+
+    // Create full process objects from examples
+    const newProcesses = examples.map((ex, idx) => ({
+      id: `p${idx + 1}`,
+      name: ex.name,
+      arrivalTime: ex.arrivalTime,
+      burstTime: ex.burstTime,
+      priority: ex.priority,
+      color: ex.color,
+      remainingTime: ex.burstTime,
+      startTime: null,
+      completionTime: null,
+      waitingTime: 0,
+      turnaroundTime: 0,
+      state: 'waiting' as const,
+    }));
+
+    setIsPlaying(false);
+    setBaseProcesses(newProcesses);
+    setSchedulerState(resetSimulation(newProcesses, quantum));
     setAnalysis(null);
   };
 
@@ -235,7 +263,7 @@ const MainApp: React.FC = () => {
             {langMenuOpen && (
               <>
                 <div className="fixed inset-0 z-10" onClick={() => setLangMenuOpen(false)}></div>
-                <div className="absolute right-0 top-full mt-2 w-32 bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl border border-white/20 dark:border-slate-700/50 rounded-xl shadow-xl z-20 overflow-hidden flex flex-col">
+                <div className="absolute right-0 top-full mt-2 w-32 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl z-20 overflow-hidden flex flex-col">
                   <button
                     onClick={() => { setLanguage('IT'); setLangMenuOpen(false); }}
                     className={`px-4 py-2 text-left text-xs font-bold hover:bg-indigo-50 dark:hover:bg-indigo-900/30 transition-colors ${language === 'IT' ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-600 dark:text-slate-400'}`}
@@ -253,6 +281,15 @@ const MainApp: React.FC = () => {
               </>
             )}
           </div>
+
+          {/* Help Button */}
+          <button
+            onClick={() => setIsAppHelpOpen(true)}
+            className="p-2.5 rounded-xl bg-white/50 dark:bg-slate-800/50 hover:bg-white dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition-all border border-transparent hover:border-slate-200 dark:hover:border-slate-600 active:scale-95"
+            title="Help"
+          >
+            <HelpCircle size={18} />
+          </button>
 
           <button
             onClick={() => setDarkMode(!darkMode)}
@@ -290,6 +327,8 @@ const MainApp: React.FC = () => {
               onUpdateProcess={handleUpdateProcess}
               onDeleteProcess={handleDeleteProcess}
               onClear={handleClear}
+              onLoadExample={handleLoadExample}
+              algorithm={algorithm}
               disabled={isPlaying && !schedulerState.isFinished}
             />
           </div>
@@ -323,6 +362,8 @@ const MainApp: React.FC = () => {
                 onUpdateProcess={handleUpdateProcess}
                 onDeleteProcess={handleDeleteProcess}
                 onClear={() => { handleClear(); setMobileInputOpen(false); }}
+                onLoadExample={() => { handleLoadExample(); setMobileInputOpen(false); }}
+                algorithm={algorithm}
                 disabled={isPlaying && !schedulerState.isFinished}
               />
             </div>
@@ -532,6 +573,11 @@ const MainApp: React.FC = () => {
           algorithm={algorithm}
           onClose={() => setIsAlgoHelpOpen(false)}
         />
+      )}
+
+      {/* App Help Modal */}
+      {isAppHelpOpen && (
+        <AppHelpModal onClose={() => setIsAppHelpOpen(false)} />
       )}
 
     </div>

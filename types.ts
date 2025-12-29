@@ -5,7 +5,7 @@ export interface Process {
   burstTime: number;
   priority: number;
   color: string;
-  
+
   // Dynamic State
   remainingTime: number;
   startTime: number | null;
@@ -15,7 +15,7 @@ export interface Process {
   state: 'ready' | 'running' | 'completed' | 'waiting';
 }
 
-export type AlgorithmType = 'FCFS' | 'SJF' | 'SRTF' | 'RR' | 'PRIORITY';
+export type AlgorithmType = 'FCFS' | 'SJF' | 'SRTF' | 'RR' | 'PRIORITY' | 'HRRN' | 'PRIORITY_P' | 'LJF' | 'LRTF';
 export type Language = 'IT' | 'EN';
 
 export interface SchedulerState {

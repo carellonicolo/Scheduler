@@ -31,7 +31,7 @@ const ProcessCard: React.FC<{
   // Dynamic Styles based on variant
   const containerClasses = isActive
     ? "w-56 h-72 py-6 px-4" // Active (CPU) Size
-    : "w-24 h-32 py-3 px-2"; // Queue Size
+    : "w-24 h-40 py-3 px-2"; // Queue Size
 
   const nameSize = isActive ? "text-3xl" : "text-base";
   const iconSize = isActive ? "w-16 h-16" : "w-9 h-9";
@@ -50,7 +50,7 @@ const ProcessCard: React.FC<{
       style={{ borderRadius: '24px' }} // Forced border radius for consistency
       className={`
         relative z-10 flex flex-col items-center justify-between
-        rounded-3xl overflow-hidden transition-shadow duration-300 cursor-help
+        rounded-3xl overflow-hidden transition-shadow duration-300 cursor-pointer
         bg-white/80 dark:bg-slate-800/80 backdrop-blur-md
         border-[1.5px] border-white/40 dark:border-slate-700/50
         shadow-sm hover:shadow-2xl hover:shadow-indigo-500/10 dark:hover:shadow-indigo-900/20
@@ -60,8 +60,8 @@ const ProcessCard: React.FC<{
       {/* Top Status Indicator */}
       <motion.div
         layout
-        className="absolute top-0 left-1/2 -translate-x-1/2 rounded-b-lg shadow-sm"
-        style={{ backgroundColor: process.color, width: isActive ? '40%' : '50%', height: isActive ? '6px' : '4px' }}
+        className="absolute top-0 left-0 right-0 rounded-b-none shadow-sm"
+        style={{ backgroundColor: process.color, height: isActive ? '6px' : '4px' }}
       />
 
       {/* Main Content */}
@@ -106,7 +106,7 @@ const ProcessCard: React.FC<{
                 className="h-full rounded-full"
                 initial={{ width: 0 }}
                 animate={{ width: `${progress}%` }}
-                transition={{ type: "spring", stiffness: 50, damping: 15 }}
+                transition={{ duration: 0.8, ease: "easeOut" }}
                 style={{ backgroundColor: process.color }}
               />
             </div>
@@ -240,11 +240,11 @@ export const Visualizer: React.FC<VisualizerProps> = ({
               </div>
             </div>
 
-            <div className="flex-1 relative rounded-2xl bg-slate-50/50 dark:bg-slate-950/30 border border-slate-100 dark:border-slate-800/50 p-4 overflow-hidden">
+            <div className="flex-1 relative rounded-2xl bg-slate-50/50 dark:bg-slate-950/30 border border-slate-100 dark:border-slate-800/50 p-4 overflow-hidden min-h-[190px]">
               {/* Grid lines decoration */}
               <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px)] bg-[size:20px] pointer-events-none"></div>
 
-              <div className="relative h-full flex items-center gap-4 overflow-x-auto scrollbar-hide px-2">
+              <div className="relative flex items-center gap-4 overflow-x-auto scrollbar-hide px-2 min-h-[170px]">
                 <AnimatePresence mode="popLayout">
                   {incomingProcesses.length === 0 ? (
                     <motion.div
@@ -285,11 +285,11 @@ export const Visualizer: React.FC<VisualizerProps> = ({
               </div>
             </div>
 
-            <div className="flex-1 relative rounded-2xl bg-slate-50/50 dark:bg-slate-950/30 border border-slate-100 dark:border-slate-800/50 p-4 overflow-hidden">
+            <div className="flex-1 relative rounded-2xl bg-slate-50/50 dark:bg-slate-950/30 border border-slate-100 dark:border-slate-800/50 p-4 overflow-hidden min-h-[190px]">
               {/* Grid lines decoration */}
               <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px)] bg-[size:20px] pointer-events-none"></div>
 
-              <div className="relative h-full flex items-center gap-4 overflow-x-auto scrollbar-hide px-2">
+              <div className="relative flex items-center gap-4 overflow-x-auto scrollbar-hide px-2 min-h-[170px]">
                 <AnimatePresence mode="popLayout">
                   {readyQueue.length === 0 ? (
                     <motion.div
@@ -353,17 +353,19 @@ export const Visualizer: React.FC<VisualizerProps> = ({
           )}
 
           {ganttChart.map((block, idx) => (
-            <div
-              key={idx}
+            <motion.div
+              key={`${block.processId}-${block.startTime}`}
               className="relative z-10 group flex-shrink-0 flex flex-col justify-center select-none"
-              style={{ width: `${(block.endTime - block.startTime) * 40}px` }}
+              initial={{ width: 0 }}
+              animate={{ width: (block.endTime - block.startTime) * 40 }}
+              transition={{ duration: 0.9, ease: "linear" }}
             >
               {/* Connector dots */}
               <div className="absolute top-1/2 left-0 w-2 h-2 -ml-1 bg-slate-300 dark:bg-slate-700 rounded-full z-0 hidden"></div>
 
               {/* Block Body */}
               <div
-                className="h-12 mx-[1px] rounded-lg flex items-center justify-center text-white font-bold text-xs shadow-sm transition-all hover:scale-110 hover:z-20 cursor-help border border-white/10 overflow-hidden relative"
+                className="h-12 mx-[1px] rounded-lg flex items-center justify-center text-white font-bold text-xs shadow-sm transition-all hover:scale-110 hover:z-20 cursor-pointer border border-white/10 overflow-hidden relative"
                 style={{
                   backgroundColor: block.color,
                   boxShadow: `0 4px 12px -2px ${block.color}60`
@@ -385,20 +387,31 @@ export const Visualizer: React.FC<VisualizerProps> = ({
                 </div>
               </div>
 
-              {/* Time Marker Start */}
-              <div className="absolute top-full mt-3 left-0 -translate-x-1/2 flex flex-col items-center group-hover:text-indigo-500 transition-colors">
-                <div className="w-[1px] h-2 bg-slate-300 dark:bg-slate-600 mb-1 group-hover:bg-indigo-500"></div>
-                <span className="text-[10px] font-mono font-medium text-slate-400 group-hover:text-indigo-500">{block.startTime}</span>
+              {/* Time Markers - All ticks for each unit of time */}
+              <div className="absolute top-full mt-3 left-0 right-0 flex">
+                {Array.from({ length: block.endTime - block.startTime + 1 }, (_, i) => {
+                  const timeValue = block.startTime + i;
+                  const isFirst = i === 0;
+                  const isLast = i === block.endTime - block.startTime;
+                  return (
+                    <div
+                      key={timeValue}
+                      className="flex flex-col items-center"
+                      style={{
+                        position: 'absolute',
+                        left: `${i * 40}px`,
+                        transform: 'translateX(-50%)'
+                      }}
+                    >
+                      <div className={`w-[1px] ${isFirst || isLast ? 'h-3' : 'h-2'} bg-slate-300 dark:bg-slate-600 mb-1`}></div>
+                      <span className={`text-[10px] font-mono font-medium ${isFirst || isLast ? 'text-slate-500 dark:text-slate-400' : 'text-slate-400 dark:text-slate-500'}`}>
+                        {timeValue}
+                      </span>
+                    </div>
+                  );
+                })}
               </div>
-
-              {/* Time Marker End (Only for last block) */}
-              {idx === ganttChart.length - 1 && (
-                <div className="absolute top-full mt-3 right-0 translate-x-1/2 flex flex-col items-center">
-                  <div className="w-[1px] h-2 bg-slate-300 dark:bg-slate-600 mb-1"></div>
-                  <span className="text-[10px] font-mono font-medium text-slate-400">{block.endTime}</span>
-                </div>
-              )}
-            </div>
+            </motion.div>
           ))}
 
           {/* Spacer for right scroll padding */}

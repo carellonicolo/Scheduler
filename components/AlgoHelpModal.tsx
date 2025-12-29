@@ -109,6 +109,84 @@ const ALGO_DATA = {
             ],
             totalTime: 9
         }
+    },
+    HRRN: {
+        color: 'from-teal-500 to-cyan-500',
+        icon: '⚖️',
+        complexity: 'O(n²)',
+        type: 'non-preemptive',
+        example: {
+            processes: [
+                { id: 'P1', arrival: 0, burst: 3, color: '#ef4444' },
+                { id: 'P2', arrival: 2, burst: 6, color: '#22c55e' },
+                { id: 'P3', arrival: 4, burst: 4, color: '#3b82f6' },
+            ],
+            gantt: [
+                { id: 'P1', start: 0, end: 3 },
+                { id: 'P2', start: 3, end: 9 },
+                { id: 'P3', start: 9, end: 13 },
+            ],
+            totalTime: 13
+        }
+    },
+    PRIORITY_P: {
+        color: 'from-fuchsia-500 to-pink-500',
+        icon: '⚡',
+        complexity: 'O(n²)',
+        type: 'preemptive',
+        example: {
+            processes: [
+                { id: 'P1', arrival: 0, burst: 5, priority: 3, color: '#ef4444' },
+                { id: 'P2', arrival: 1, burst: 3, priority: 1, color: '#22c55e' },
+                { id: 'P3', arrival: 3, burst: 2, priority: 2, color: '#3b82f6' },
+            ],
+            gantt: [
+                { id: 'P1', start: 0, end: 1 },
+                { id: 'P2', start: 1, end: 4 },
+                { id: 'P3', start: 4, end: 6 },
+                { id: 'P1', start: 6, end: 10 },
+            ],
+            totalTime: 10
+        }
+    },
+    LJF: {
+        color: 'from-indigo-500 to-blue-500',
+        icon: '📏',
+        complexity: 'O(n²)',
+        type: 'non-preemptive',
+        example: {
+            processes: [
+                { id: 'P1', arrival: 0, burst: 2, color: '#ef4444' },
+                { id: 'P2', arrival: 1, burst: 6, color: '#22c55e' },
+                { id: 'P3', arrival: 2, burst: 4, color: '#3b82f6' },
+            ],
+            gantt: [
+                { id: 'P1', start: 0, end: 2 },
+                { id: 'P2', start: 2, end: 8 },
+                { id: 'P3', start: 8, end: 12 },
+            ],
+            totalTime: 12
+        }
+    },
+    LRTF: {
+        color: 'from-red-500 to-orange-500',
+        icon: '🔥',
+        complexity: 'O(n²)',
+        type: 'preemptive',
+        example: {
+            processes: [
+                { id: 'P1', arrival: 0, burst: 4, color: '#ef4444' },
+                { id: 'P2', arrival: 1, burst: 5, color: '#22c55e' },
+                { id: 'P3', arrival: 2, burst: 2, color: '#3b82f6' },
+            ],
+            gantt: [
+                { id: 'P1', start: 0, end: 1 },
+                { id: 'P2', start: 1, end: 5 },
+                { id: 'P1', start: 5, end: 8 },
+                { id: 'P3', start: 8, end: 10 },
+            ],
+            totalTime: 10
+        }
     }
 };
 
@@ -432,6 +510,223 @@ Priority Scheduling è essenziale nei sistemi real-time dove alcuni task hanno d
                     'Può essere percepito come ingiusto dagli utenti',
                     'La configurazione corretta richiede analisi approfondita del workload'
                 ]
+            },
+            HRRN: {
+                description: 'Highest Response Ratio Next (HRRN) è un algoritmo che bilancia equità ed efficienza calcolando un rapporto di risposta per ogni processo, favorendo quelli che aspettano da più tempo proporzionalmente al loro burst time.',
+                theory: `**Il Rapporto di Risposta: Matematica dell'Equità**
+
+HRRN è un algoritmo progettato per correggere il difetto fatale di SJF (Shortest Job First), ovvero la starvation. Per farlo, introduce il concetto di "Response Ratio" (R), un valore dinamico ricalcolato ad ogni decisione di scheduling.
+
+La formula è: **R = (W + S) / S**
+
+dove:
+• **W** (Waiting Time) = Tempo trascorso dal processo in attesa nella ready queue
+• **S** (Service Time) = Burst time stimato del processo
+
+**Come funziona l'Aging Implicito**
+
+Analizzando la formula, notiamo due comportamenti interessanti:
+1. Se il denominatore S è piccolo (processo breve), R tende ad essere grande. Questo preserva la preferenza per i job brevi tipica di SJF.
+2. Se il numeratore W cresce (il processo aspetta), R cresce linearmente.
+
+Questo secondo punto è cruciale: anche un processo lunghissimo, se aspetta abbastanza a lungo, avrà un valore W talmente alto che il suo rapporto R supererà quello dei nuovi processi brevi in arrivo. È un meccanismo di "aging" (invecchiamento) automatico e matematicamente garantito.
+
+**Esempio Numerico**
+
+Immagina un processo P1 (burst 10) che aspetta da 50 unità di tempo.
+R(P1) = (50 + 10) / 10 = 6.
+
+Ora arriva P2 (burst 1). Essendo appena arrivato, W=0.
+R(P2) = (0 + 1) / 1 = 1.
+
+Nonostante P2 sia piccolissimo, P1 ha accumulato abbastanza "diritto di prelazione" da essere eseguito prima. Questo dimostra come l'algoritmo bilanci dinamicamente la "fame" di CPU dei processi vecchi con l'efficienza di servire quelli brevi.
+
+**Vantaggi Rispetto a SJF**
+
+HRRN offre il meglio dei due mondi:
+• Mantiene un throughput elevato servendo rapidamente i job brevi.
+• Non richiede parametri di configurazione arbitrari per l'aging.
+• Garantisce matematicamente che nessun processo attenda all'infinito.
+
+**Il Costo Computazionale**
+
+Il prezzo da pagare è la complessità. In FCFS non si calcola nulla. In SJF si cerca il minimo. In HRRN, ogni volta che la CPU si libera, bisogna aggiornare W per *tutti* i processi in attesa e ricalcolare R. Su sistemi con migliaia di processi, questo overhead può diventare non trascurabile.`,
+                keyPoints: [
+                    'Response Ratio = (Waiting Time + Burst Time) / Burst Time',
+                    'Elimina la starvation: il response ratio aumenta con l\'attesa',
+                    'Non-preemptive: una volta avviato, il processo completa',
+                    'Bilancia efficienza ed equità automaticamente',
+                    'Non richiede parametri di configurazione come l\'aging',
+                    'Complessità O(n²) per calcolare tutti i rapporti'
+                ],
+                pros: [
+                    'Elimina completamente la starvation',
+                    'Mantiene buone prestazioni come SJF',
+                    'Bilancio automatico tra processi brevi e lunghi',
+                    'Non richiede configurazione di aging esplicita',
+                    'Favorisce comunque i processi brevi',
+                    'Percepito come più equo dagli utenti'
+                ],
+                cons: [
+                    'Overhead computazionale: deve calcolare il rapporto per ogni processo',
+                    'Richiede conoscenza del burst time',
+                    'Non-preemptive: processi lunghi bloccano la CPU',
+                    'Più complesso da implementare rispetto a FCFS',
+                    'Prestazioni inferiori a SJF puro in scenari senza starvation',
+                    'Non adatto a sistemi real-time'
+                ]
+            },
+            PRIORITY_P: {
+                description: 'Priority Scheduling Preemptive è la versione con prelazione dello scheduling a priorità. Quando arriva un processo con priorità più alta, il processo corrente viene immediatamente interrotto.',
+                theory: `**Preemption basata sulla Priorità**
+
+A differenza della versione non-preemptive, Priority Preemptive è un algoritmo "aggressivo". Lo scheduler non aspetta che un processo termini o si blocchi volontariamente per I/O. Ad ogni singolo istante in cui arriva un nuovo processo nella Ready Queue, lo scheduler confronta la priorità del nuovo arrivato con quella del processo attualmente in esecuzione.
+
+Se (Priorità_Nuovo < Priorità_Corrente), avviene il context switch immediato. Ricordiamo che nel nostro sistema, numero più basso = priorità più alta.
+
+**L'essenza dei Sistemi Real-Time**
+
+Questo comportamento non è solo un'ottimizzazione: è una necessità assoluta per i sistemi operativi Real-Time (RTOS). Pensa all'ABS di un'auto: quando i sensori rilevano il bloccaggio delle ruote, il processo che controlla i freni deve essere eseguito **subito**, interrompendo qualsiasi altra cosa (come l'aggiornamento del display della radio).
+
+In un sistema non-preemptive, il processo dell'ABS dovrebbe aspettare che la radio finisca di aggiornare lo schermo. In un'auto a 100 km/h, quei millisecondi di ritardo potrebbero essere fatali. Priority Preemptive garantisce che il task critico ottenga la CPU nell'istante stesso in cui diventa pronto.
+
+**Il Problema dell'Inversione di Priorità (Priority Inversion)**
+
+La versione preemptive soffre acutamente di un problema noto come Inversione di Priorità.
+Scenario:
+• Task L (Low priority) ottiene un lock su una risorsa condivisa.
+• Task H (High priority) arriva, fa preemption su L, e prova ad acquisire lo stesso lock.
+• H si blocca perché il lock è occupato.
+• Task M (Medium priority) arriva. Ha priorità > L, quindi fa preemption su L.
+• Risultato: M esegue, L non può rilasciare il lock, e H (il più importante!) aspetta M.
+
+Inosservato, un task di media importanza sta bloccando un task critico. Questo scenario richiede protocolli avanzati come il **Priority Inheritance** (L eredita temporaneamente la priorità di H) per essere risolto.
+
+**Overhead di Context Switch**
+
+La reattività ha un costo. Un sistema molto carico con frequenti arrivi di processi ad alta priorità può cadere nel "thrashing", dove la CPU spende più tempo a salvare e ripristinare contesti che a eseguire lavoro utile.`,
+                keyPoints: [
+                    'Preemption immediata per processi a priorità più alta',
+                    'Ideale per sistemi real-time con deadline stringenti',
+                    'Inversione di priorità richiede gestione esplicita',
+                    'Context switch frequenti possono aumentare l\'overhead',
+                    'Starvation possibile per processi a bassa priorità',
+                    'Usato nei kernel di sistemi operativi moderni'
+                ],
+                pros: [
+                    'Risposta immediata per processi critici',
+                    'Ideale per sistemi real-time',
+                    'Garantisce che i task urgenti non aspettino',
+                    'Flessibile con priorità dinamiche',
+                    'Permette deadline garantite',
+                    'Standard per interrupt handling'
+                ],
+                cons: [
+                    'Starvation severa per basse priorità',
+                    'Overhead di context switch elevato',
+                    'Inversione di priorità più problematica',
+                    'Richiede protocolli complessi (PIP, PCP)',
+                    'Difficile determinare priorità ottimali',
+                    'Processi lunghi a bassa priorità possono non completare mai'
+                ]
+            },
+            LJF: {
+                description: 'Longest Job First (LJF) è l\'opposto di SJF: seleziona sempre il processo con il burst time più lungo. Sebbene controintuitivo, è utile per studi comparativi.',
+                theory: `**La Logica del "Caso Peggiore"**
+
+Longest Job First (LJF) è un algoritmo controintuitivo: perché mai dovremmo voler eseguire prima i processi più lunghi? Sembra una ricetta per il disastro. E infatti, in quasi tutti i sistemi interattivi moderni, lo è. Ma il suo studio è fondamentale perché rappresenta lo "stress test" teorico per eccellenza.
+
+**Analisi del Throughput**
+
+Mentre SJF massimizza il numero di job completati per unità di tempo, LJF fa l'esatto opposto.
+Immagina un job lungo (1000s) e 10 job brevi (1s ciascuno).
+• SJF completa i 10 job brevi in 10s. Utilità immediata per 10 utenti.
+• LJF costringe i 10 utenti ad aspettare 1000s + esecuzione.
+Il throughput del sistema crolla drammaticamente nelle fasi iniziali.
+
+**L'Utilità in Sistemi Ibridi e Batch**
+
+Esistono tuttavia scenari di nicchia dove LJF ha senso. Considera un sistema di rendering grafico dove i job brevi sono anteprime e i job lunghi sono render finali 8K.
+Se il sistema usasse SJF, i render 8K verrebbero continuamente rimandati (starvation) dalle continue richieste di anteprima degli utenti. Usando LJF (o meccanismi ispirati ad esso), si garantisce che i "pesi massimi" vengano processati, mentre le anteprime possono aspettare leggermente di più.
+
+Inoltre, se il sistema deve gestire risorse saturate I/O vs CPU bound, a volte dare priorità ai job lunghi (spesso CPU bound) permette di tenere la CPU occupata mentre i job brevi (spesso I/O bound) aspettano brevemente, migliorando l'utilizzo globale delle risorse in condizioni specifiche.
+
+**Il Convoglio Rovesciato**
+
+In FCFS, un processo lungo blocca gli altri casualmente. In LJF, il blocco è sistematico e garantito. È la dimostrazione accademica perfetta di come una politica di scheduling possa distruggere la reattività di un sistema se non allineata con gli obiettivi dell'utente.`,
+                keyPoints: [
+                    'Seleziona il processo con burst time più lungo',
+                    'Opposto di SJF: massimizza il tempo di attesa medio',
+                    'Utile per studi comparativi e benchmarking',
+                    'Non-preemptive: il processo completa prima di cedere',
+                    'Processi brevi soffrono di tempi di attesa molto elevati',
+                    'Raramente usato in pratica'
+                ],
+                pros: [
+                    'Job lunghi hanno priorità garantita',
+                    'Utile per benchmark e confronti teorici',
+                    'Implementazione semplice',
+                    'Prevedibile: si conosce l\'ordine di esecuzione',
+                    'Nessun rischio di starvation per job lunghi',
+                    'Può essere utile in sistemi batch specifici'
+                ],
+                cons: [
+                    'Tempo di attesa medio massimo',
+                    'Processi brevi attendono enormemente',
+                    'Throughput pessimo',
+                    'Totalmente inadatto a sistemi interattivi',
+                    'Richiede conoscenza del burst time',
+                    'Genera il massimo insoddisfazione per processi brevi'
+                ]
+            },
+            LRTF: {
+                description: 'Longest Remaining Time First (LRTF) è la versione preemptive di LJF. Seleziona sempre il processo con il tempo residuo più lungo, interrompendo se necessario.',
+                theory: `**L'Anti-Ottimizzazione**
+
+Se SRTF è l'algoritmo matematicamente ottimale per *minimizzare* il tempo di attesa medio, LRTF (Longest Remaining Time First) è l'algoritmo che tende a *massimizzarlo*. È lo "specchio oscuro" di SRTF. Studiarlo ci aiuta a comprendere i limiti inferiori delle prestazioni di un sistema.
+
+**Comportamento Dinamico e Thrashing**
+
+LRTF ha un comportamento patologico unico: tende a portare tutti i processi a terminare quasi contemporaneamente.
+Immagina due processi, A (100s) e B (90s).
+1. LRTF esegue A finché il suo tempo residuo non scende sotto 90s (quindi per 10s).
+2. Ora A=90s, B=90s.
+3. LRTF inizierà ad alternarli continuamente (o a ogni quantum micro-scopico), mantenendoli pari.
+4. Se arriva C (50s), dovrà aspettare che A e B scendano entrambi a 50s.
+
+Il risultato? Invece di far uscire B dal sistema rapidamente, LRTF lo trattiene fino alla fine. La "Multiprogrammazione" è massima, ma il "Turnaround Time" medio esplode.
+
+**Massimizzazione del Parallelismo (Teorico)**
+
+Un vantaggio teorico sottile esiste: LRTF tende a tenere attivi il maggior numero possibile di processi per il maggior tempo possibile. In sistemi paralleli complessi dove i processi subiscono fasi di I/O, mantenerli tutti "vivi" ma lenti potrebbe (in casi rari e specifici) aumentare le probabilità di trovare lavoro utile da fare quando un processo si blocca. Tuttavia, su una CPU single-core, è quasi sempre la scelta peggiore.
+
+**Conclusione Accademica**
+
+LRTF è importante non per essere usato, ma per essere evitato. Dimostra come l'eccesso di "equità" nel distribuire il ritardo (tutti aspettano insieme) sia spesso preferibile all'equità di servizio nei sistemi time-sharing reali.`,
+                keyPoints: [
+                    'Versione preemptive di LJF',
+                    'Seleziona il processo con tempo residuo più lungo',
+                    'Massimizza intenzionalmente il tempo di attesa medio',
+                    'Processi brevi soffrono enormemente',
+                    'Molti context switch possibili',
+                    'Strumento principalmente accademico'
+                ],
+                pros: [
+                    'Job lunghi hanno sempre la CPU',
+                    'Utile per confronti con SRTF',
+                    'Strumento didattico efficace',
+                    'Mostra l\'estremo opposto dell\'ottimizzazione',
+                    'Preemptive: può rispondere a nuovi arrivi',
+                    'Benchmark per worst-case performance'
+                ],
+                cons: [
+                    'Tempo di attesa medio massimo possibile',
+                    'Processi brevi possono attendere indefinitamente',
+                    'Overhead di context switch elevato',
+                    'Totalmente impraticabile in produzione',
+                    'Starvation garantita per processi brevi',
+                    'Prestazioni pessime in tutti gli scenari reali'
+                ]
             }
         }
     },
@@ -752,6 +1047,208 @@ Priority Scheduling is essential in real-time systems where some tasks have abso
                     'Computational overhead for aging management',
                     'Can be perceived as unfair by users',
                     'Correct configuration requires in-depth workload analysis'
+                ]
+            },
+            HRRN: {
+                description: 'Highest Response Ratio Next (HRRN) balances fairness and efficiency by calculating a response ratio for each process, favoring those that have waited longer relative to their burst time.',
+                theory: `**The Response Ratio: The Math of Fairness**
+
+HRRN is designed to correct SJF's (Shortest Job First) fatal flaw: starvation. To do this, it introduces the concept of "Response Ratio" (R), a dynamic value recalculated at every scheduling decision.
+
+The formula is: **R = (W + S) / S**
+
+where:
+• **W** (Waiting Time) = Time spent by the process waiting in the ready queue
+• **S** (Service Time) = Estimated burst time of the process
+
+**How Implicit Aging Works**
+
+Analyzing the formula, we notice two interesting behaviors:
+1. If the denominator S is small (short process), R tends to be large. This preserves the preference for short jobs typical of SJF.
+2. If the numerator W grows (process waits), R grows linearly.
+
+This second point is crucial: even a very long process, if it waits long enough, will have a W value so high that its ratio R will exceed that of new incoming short processes. It is an automatic and mathematically guaranteed "aging" mechanism.
+
+**Numeric Example**
+
+Imagine a process P1 (burst 10) that has been waiting for 50 time units.
+R(P1) = (50 + 10) / 10 = 6.
+
+Now P2 (burst 1) arrives. Being newly arrived, W=0.
+R(P2) = (0 + 1) / 1 = 1.
+
+Even though P2 is tiny, P1 has accumulated enough "preemption right" to be executed first. This demonstrates how the algorithm dynamically balances the "CPU hunger" of old processes with the efficiency of serving short ones.
+
+**Computational Cost**
+
+The price to pay is complexity. In FCFS, nothing is calculated. In SJF, we look for the minimum. In HRRN, every time the CPU becomes free, we must update W for *all* waiting processes and recalculate R. On systems with thousands of processes, this overhead can become non-negligible.`,
+                keyPoints: [
+                    'Response Ratio = (Waiting Time + Burst Time) / Burst Time',
+                    'Eliminates starvation: response ratio increases with waiting',
+                    'Non-preemptive: once started, process runs to completion',
+                    'Automatically balances efficiency and fairness',
+                    'No configuration parameters like aging required',
+                    'O(n²) complexity to calculate all ratios'
+                ],
+                pros: [
+                    'Completely eliminates starvation',
+                    'Maintains good performance like SJF',
+                    'Automatic balance between short and long processes',
+                    'No explicit aging configuration required',
+                    'Still favors short processes',
+                    'Perceived as fairer by users'
+                ],
+                cons: [
+                    'Computational overhead: must calculate ratio for each process',
+                    'Requires burst time knowledge',
+                    'Non-preemptive: long processes block CPU',
+                    'More complex to implement than FCFS',
+                    'Lower performance than pure SJF in no-starvation scenarios',
+                    'Not suitable for real-time systems'
+                ]
+            },
+            PRIORITY_P: {
+                description: 'Preemptive Priority Scheduling is the preemptive version of priority scheduling. When a higher priority process arrives, the current process is immediately interrupted.',
+                theory: `**Priority-Based Preemption**
+
+Unlike the non-preemptive version, Preemptive Priority is an "aggressive" algorithm. The scheduler does not wait for a process to finish or voluntarily block for I/O. At every single instant a new process arrives in the Ready Queue, the scheduler compares the newcomer's priority with that of the currently running process.
+
+If (New_Priority < Current_Priority), an immediate context switch occurs. Remember that in our system, lower number = higher priority.
+
+**The Essence of Real-Time Systems**
+
+This behavior is not just an optimization: it is an absolute necessity for Real-Time Operating Systems (RTOS). Think of a car's ABS: when sensors detect wheel locking, the brake control process must be executed **immediately**, interrupting anything else (like the radio display update).
+
+In a non-preemptive system, the ABS process would have to wait for the radio to finish updating the screen. In a car moving at 100 km/h, those milliseconds of delay could be fatal. Preemptive Priority guarantees that the critical task gets the CPU the very instant it becomes ready.
+
+**The Priority Inversion Problem**
+
+The preemptive version suffers acutely from a problem known as Priority Inversion.
+Scenario:
+• Task L (Low priority) acquires a lock on a shared resource.
+• Task H (High priority) arrives, preempts L, and tries to acquire the same lock.
+• H blocks because the lock is busy.
+• Task M (Medium priority) arrives. It has priority > L, so it preempts L.
+• Result: M runs, L cannot release the lock, and H (the most important!) waits for M.
+
+Unnoticed, a medium-importance task is blocking a critical task. This scenario requires advanced protocols like **Priority Inheritance** (L temporarily inherits H's priority) to be resolved.`,
+                keyPoints: [
+                    'Immediate preemption for higher priority processes',
+                    'Ideal for real-time systems with strict deadlines',
+                    'Priority inversion requires explicit handling',
+                    'Frequent context switches can increase overhead',
+                    'Starvation possible for low-priority processes',
+                    'Used in modern operating system kernels'
+                ],
+                pros: [
+                    'Immediate response for critical processes',
+                    'Ideal for real-time systems',
+                    'Guarantees urgent tasks do not wait',
+                    'Flexible with dynamic priorities',
+                    'Enables guaranteed deadlines',
+                    'Standard for interrupt handling'
+                ],
+                cons: [
+                    'Severe starvation for low priorities',
+                    'High context switch overhead',
+                    'Priority inversion more problematic',
+                    'Requires complex protocols (PIP, PCP)',
+                    'Difficult to determine optimal priorities',
+                    'Low-priority long processes may never complete'
+                ]
+            },
+            LJF: {
+                description: 'Longest Job First (LJF) is the opposite of SJF: it always selects the process with the longest burst time. While counterintuitive, it is useful for comparative studies.',
+                theory: `**The Logic of the "Worst Case"**
+
+Longest Job First (LJF) is a counterintuitive algorithm: why would we ever want to run the longest processes first? It seems like a recipe for disaster. And indeed, in almost all modern interactive systems, it is. But its study is fundamental because it represents the theoretical "stress test" par excellence.
+
+**Throughput Analysis**
+
+While SJF maximizes the number of jobs completed per unit of time, LJF does the exact opposite.
+Imagine a long job (1000s) and 10 short jobs (1s each).
+• SJF completes the 10 short jobs in 10s. Immediate utility for 10 users.
+• LJF forces 10 users to wait 1000s + execution.
+System throughput collapses dramatically in the initial phases.
+
+**Utility in Hybrid and Batch Systems**
+
+However, niche scenarios exist where LJF makes sense. Consider a graphic rendering system where short jobs are previews and long jobs are final 8K renders.
+If the system used SJF, 8K renders would be continuously postponed (starvation) by constant user preview requests. Using LJF (or mechanisms inspired by it) guarantees that "heavyweights" are processed, while previews can wait slightly longer.
+
+Also, if the system must handle I/O vs CPU bound saturated resources, sometimes giving priority to long jobs (often CPU bound) allows keeping the CPU busy while short jobs (often I/O bound) wait briefly, improving global resource utilization in specific conditions.
+
+**The Reverse Convoy**
+
+In FCFS, a long process blocks others randomly. In LJF, blocking is systematic and guaranteed. It is the perfect academic demonstration of how a scheduling policy can destroy system responsiveness if not aligned with user goals.`,
+                keyPoints: [
+                    'Selects process with longest burst time',
+                    'Opposite of SJF: maximizes average waiting time',
+                    'Useful for comparative studies and benchmarking',
+                    'Non-preemptive: process completes before yielding',
+                    'Short processes suffer very high waiting times',
+                    'Rarely used in practice'
+                ],
+                pros: [
+                    'Long jobs have guaranteed priority',
+                    'Useful for benchmark and theoretical comparisons',
+                    'Simple implementation',
+                    'Predictable: execution order is known',
+                    'No starvation risk for long jobs',
+                    'Can be useful in specific batch systems'
+                ],
+                cons: [
+                    'Maximum average waiting time',
+                    'Short processes wait enormously',
+                    'Poor throughput',
+                    'Totally unsuitable for interactive systems',
+                    'Requires burst time knowledge',
+                    'Generates maximum dissatisfaction for short processes'
+                ]
+            },
+            LRTF: {
+                description: 'Longest Remaining Time First (LRTF) is the preemptive version of LJF. It always selects the process with the longest remaining time, preempting if necessary.',
+                theory: `**The Anti-Optimization**
+
+If SRTF is the mathematically optimal algorithm for *minimizing* average waiting time, LRTF (Longest Remaining Time First) is the algorithm that tends to *maximize* it. It is the "dark mirror" of SRTF. Studying it helps us understand the lower bounds of system performance.
+
+**Dynamic Behavior and Thrashing**
+
+LRTF has a unique pathological behavior: it tends to make all processes finish almost simultaneously.
+Imagine two processes, A (100s) and B (90s).
+1. LRTF runs A until its remaining time drops below 90s (so for 10s).
+2. Now A=90s, B=90s.
+3. LRTF will start alternating them continuously (or at every microscopic quantum), keeping them even.
+4. If C (50s) arrives, it will have to wait for A and B to both drop to 50s.
+
+The result? Instead of getting B out of the system quickly, LRTF holds it until the end. "Multiprogramming" is maximized, but average "Turnaround Time" explodes.
+
+**Maximizing Parallelism (Theoretical)**
+
+A subtle theoretical advantage exists: LRTF tends to keep the maximum possible number of processes active for the longest possible time. In complex parallel systems where processes undergo I/O phases, keeping them all "alive" but slow might (in rare and specific cases) increase the chances of finding useful work to do when a process blocks. However, on a single-core CPU, it is almost always the worst choice.`,
+                keyPoints: [
+                    'Preemptive version of LJF',
+                    'Selects process with longest remaining time',
+                    'Intentionally maximizes average waiting time',
+                    'Short processes suffer enormously',
+                    'Many context switches possible',
+                    'Primarily an academic tool'
+                ],
+                pros: [
+                    'Long jobs always have the CPU',
+                    'Useful for comparisons with SRTF',
+                    'Effective teaching tool',
+                    'Shows the extreme opposite of optimization',
+                    'Preemptive: can respond to new arrivals',
+                    'Benchmark for worst-case performance'
+                ],
+                cons: [
+                    'Maximum possible average waiting time',
+                    'Short processes may wait indefinitely',
+                    'High context switch overhead',
+                    'Totally impractical in production',
+                    'Guaranteed starvation for short processes',
+                    'Worst performance in all real scenarios'
                 ]
             }
         }

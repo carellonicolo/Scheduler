@@ -49,7 +49,78 @@ export const ALGORITHMS = [
   { id: 'SRTF' },
   { id: 'RR' },
   { id: 'PRIORITY' },
+  { id: 'HRRN' },
+  { id: 'PRIORITY_P' },
+  { id: 'LJF' },
+  { id: 'LRTF' },
 ];
+
+// Algorithm-specific examples that highlight strengths and weaknesses
+export const ALGORITHM_EXAMPLES = {
+  // FCFS: Shows convoy effect - long process arrives first, short ones wait
+  FCFS: [
+    { name: 'Long', arrivalTime: 0, burstTime: 10, priority: 1, color: PROCESS_COLORS[0] },
+    { name: 'Quick1', arrivalTime: 1, burstTime: 2, priority: 1, color: PROCESS_COLORS[1] },
+    { name: 'Quick2', arrivalTime: 2, burstTime: 1, priority: 1, color: PROCESS_COLORS[2] },
+    { name: 'Quick3', arrivalTime: 3, burstTime: 2, priority: 1, color: PROCESS_COLORS[3] },
+  ],
+  // SJF: Shows optimal average waiting time but starvation risk for long processes
+  SJF: [
+    { name: 'Medium', arrivalTime: 0, burstTime: 6, priority: 1, color: PROCESS_COLORS[0] },
+    { name: 'Short', arrivalTime: 2, burstTime: 2, priority: 1, color: PROCESS_COLORS[1] },
+    { name: 'Long', arrivalTime: 3, burstTime: 8, priority: 1, color: PROCESS_COLORS[2] },
+    { name: 'Tiny', arrivalTime: 4, burstTime: 1, priority: 1, color: PROCESS_COLORS[3] },
+  ],
+  // SRTF: Shows preemption advantage - new shorter processes interrupt
+  SRTF: [
+    { name: 'First', arrivalTime: 0, burstTime: 8, priority: 1, color: PROCESS_COLORS[0] },
+    { name: 'Short1', arrivalTime: 1, burstTime: 2, priority: 1, color: PROCESS_COLORS[1] },
+    { name: 'Short2', arrivalTime: 2, burstTime: 1, priority: 1, color: PROCESS_COLORS[2] },
+    { name: 'Med', arrivalTime: 3, burstTime: 3, priority: 1, color: PROCESS_COLORS[3] },
+  ],
+  // RR: Shows fair time sharing - all processes get CPU time
+  RR: [
+    { name: 'P1', arrivalTime: 0, burstTime: 5, priority: 1, color: PROCESS_COLORS[0] },
+    { name: 'P2', arrivalTime: 1, burstTime: 4, priority: 1, color: PROCESS_COLORS[1] },
+    { name: 'P3', arrivalTime: 2, burstTime: 3, priority: 1, color: PROCESS_COLORS[2] },
+    { name: 'P4', arrivalTime: 3, burstTime: 6, priority: 1, color: PROCESS_COLORS[3] },
+  ],
+  // PRIORITY: Shows priority-based scheduling and potential starvation
+  PRIORITY: [
+    { name: 'LowPrio', arrivalTime: 0, burstTime: 4, priority: 5, color: PROCESS_COLORS[0] },
+    { name: 'HighPrio', arrivalTime: 1, burstTime: 3, priority: 1, color: PROCESS_COLORS[1] },
+    { name: 'MidPrio', arrivalTime: 2, burstTime: 2, priority: 3, color: PROCESS_COLORS[2] },
+    { name: 'TopPrio', arrivalTime: 4, burstTime: 5, priority: 1, color: PROCESS_COLORS[3] },
+  ],
+  // HRRN: Shows how response ratio favors waiting processes
+  HRRN: [
+    { name: 'First', arrivalTime: 0, burstTime: 8, priority: 1, color: PROCESS_COLORS[0] },
+    { name: 'Short', arrivalTime: 1, burstTime: 2, priority: 1, color: PROCESS_COLORS[1] },
+    { name: 'Long', arrivalTime: 2, burstTime: 6, priority: 1, color: PROCESS_COLORS[2] },
+    { name: 'Late', arrivalTime: 6, burstTime: 3, priority: 1, color: PROCESS_COLORS[3] },
+  ],
+  // PRIORITY_P: Shows preemption when higher priority arrives
+  PRIORITY_P: [
+    { name: 'Low', arrivalTime: 0, burstTime: 6, priority: 4, color: PROCESS_COLORS[0] },
+    { name: 'High', arrivalTime: 2, burstTime: 3, priority: 1, color: PROCESS_COLORS[1] },
+    { name: 'Mid', arrivalTime: 3, burstTime: 2, priority: 2, color: PROCESS_COLORS[2] },
+    { name: 'VHigh', arrivalTime: 5, burstTime: 2, priority: 1, color: PROCESS_COLORS[3] },
+  ],
+  // LJF: Shows longest jobs executed first
+  LJF: [
+    { name: 'Short', arrivalTime: 0, burstTime: 2, priority: 1, color: PROCESS_COLORS[0] },
+    { name: 'Long', arrivalTime: 1, burstTime: 8, priority: 1, color: PROCESS_COLORS[1] },
+    { name: 'Medium', arrivalTime: 2, burstTime: 5, priority: 1, color: PROCESS_COLORS[2] },
+    { name: 'Tiny', arrivalTime: 3, burstTime: 1, priority: 1, color: PROCESS_COLORS[3] },
+  ],
+  // LRTF: Shows preemption for longer remaining time
+  LRTF: [
+    { name: 'First', arrivalTime: 0, burstTime: 4, priority: 1, color: PROCESS_COLORS[0] },
+    { name: 'Long', arrivalTime: 1, burstTime: 6, priority: 1, color: PROCESS_COLORS[1] },
+    { name: 'Short', arrivalTime: 3, burstTime: 2, priority: 1, color: PROCESS_COLORS[2] },
+    { name: 'Med', arrivalTime: 4, burstTime: 3, priority: 1, color: PROCESS_COLORS[3] },
+  ],
+};
 
 export const TRANSLATIONS = {
   IT: {
@@ -97,12 +168,18 @@ export const TRANSLATIONS = {
     pause: 'Pausa',
     reset: 'Reset',
     lang: 'Lingua',
+    loadExample: 'Carica Esempio',
+    loadExampleDesc: 'Carica un set di processi ottimizzato per mostrare le caratteristiche dell\'algoritmo selezionato',
     algoNames: {
       FCFS: 'First Come First Serve (FCFS)',
       SJF: 'Shortest Job First (Non-Preemptive)',
       SRTF: 'Shortest Remaining Time First (Preemptive)',
       RR: 'Round Robin (RR)',
       PRIORITY: 'Priority Scheduling (Non-Preemptive)',
+      HRRN: 'Highest Response Ratio Next (HRRN)',
+      PRIORITY_P: 'Priority Scheduling (Preemptive)',
+      LJF: 'Longest Job First (Non-Preemptive)',
+      LRTF: 'Longest Remaining Time First (Preemptive)',
     },
     help: {
       title: 'Guida ai Campi',
@@ -115,6 +192,30 @@ export const TRANSLATIONS = {
       howTo: 'Come Aggiungere un Processo',
       howToDesc: 'Inserisci i valori nei campi sopra, scegli un colore e clicca "Aggiungi Processo". Puoi modificare i valori anche dopo la creazione.',
       close: 'Chiudi'
+    },
+    appHelp: {
+      title: 'Manuale Utente',
+      intro: 'Benvenuto nel Simulatore di Scheduler CPU! Questo strumento educativo ti permette di visualizzare in tempo reale come il Sistema Operativo gestisce i processi. Ecco come sfruttarlo al massimo:',
+      step1Title: '1. Configurazione del Workload',
+      step1Desc: 'Usa il pannello laterale per definire i tuoi processi. Il "Tempo di Arrivo" simula quando un programma viene lanciato, il "Burst Time" indica quanto lavoro deve fare la CPU. Puoi usare il tasto "Carica Esempio" per scenari pre-configurati.',
+      step2Title: '2. Selezione dell\'Algoritmo',
+      step2Desc: 'Scegli l\'algoritmo dalla barra inferiore. Ogni algoritmo ha una logica diversa: alcuni favoriscono i processi brevi (SJF), altri l\'equità (Round Robin), altri l\'urgenza (Priority). Cambia algoritmo e premi "Reset" per confrontare i risultati sullo stesso set di dati.',
+      step3Title: '3. Controllo della Simulazione',
+      step3Desc: 'Hai il controllo totale: "Play" per l\'esecuzione continua, "Step" per avanzare un ciclo alla volta (utile per il debugging mentale), e lo slider della velocità per rallentare l\'azione e capire ogni context switch.',
+      step4Title: '4. Analisi delle Prestazioni',
+      step4Desc: 'Oltre al grafico di Gantt visivo, osserva la tabella delle statistiche. Il "Waiting Time Medio" è l\'indicatore chiave dell\'efficienza. Dopo la simulazione, chiedi all\'AI un\'analisi approfondita cliccando su "Genera Insight".',
+      featuresTitle: 'Funzionalità Avanzate',
+      feature1: 'Visualizzazione dinamica di Ready Queue a Active State',
+      feature2: 'Supporto per algoritmi Preemptive e Non-Preemptive',
+      feature3: 'Heatmap della CPU per identificare i periodi di idle',
+      feature4: 'Integrazione AI per spiegare il "perché" dei risultati',
+      tipsTitle: '💡 Lo Sapevi Che?',
+      tips: [
+        'Puoi modificare i processi "al volo" anche a simulazione ferma per vedere come cambia la coda.',
+        'Il Quantum (in Round Robin) è cruciale: prova a cambiarlo da 2 a 10 e osserva come cambia il numero di context switch.',
+        'Usa il pulsante 💾 per salvare o caricare diversi scenari di test.'
+      ],
+      close: 'Inizia a Simulare'
     },
     algoInfo: {
       FCFS: 'First Come First Serve (FCFS) è l\'algoritmo di scheduling più semplice. I processi vengono eseguiti nell\'ordine esatto in cui arrivano nella coda dei processi pronti (Ready Queue). È un approccio "non-preemptive", il che significa che una volta che un processo inizia l\'esecuzione, continua fino al termine senza interruzioni. Sebbene semplice, può portare al "fenomeno del convoglio" dove processi brevi aspettano a lungo dietro a processi lunghi.',
@@ -175,12 +276,18 @@ export const TRANSLATIONS = {
     pause: 'Pause',
     reset: 'Reset',
     lang: 'Language',
+    loadExample: 'Load Example',
+    loadExampleDesc: 'Load a set of processes optimized to showcase the selected algorithm\'s characteristics',
     algoNames: {
       FCFS: 'First Come First Serve (FCFS)',
       SJF: 'Shortest Job First (Non-Preemptive)',
       SRTF: 'Shortest Remaining Time First (Preemptive)',
       RR: 'Round Robin (RR)',
       PRIORITY: 'Priority Scheduling (Non-Preemptive)',
+      HRRN: 'Highest Response Ratio Next (HRRN)',
+      PRIORITY_P: 'Priority Scheduling (Preemptive)',
+      LJF: 'Longest Job First (Non-Preemptive)',
+      LRTF: 'Longest Remaining Time First (Preemptive)',
     },
     help: {
       title: 'Field Guide',
@@ -193,6 +300,30 @@ export const TRANSLATIONS = {
       howTo: 'How to Add a Process',
       howToDesc: 'Enter values in the fields above, choose a color, and click "Add Process". You can modify values after creation.',
       close: 'Close'
+    },
+    appHelp: {
+      title: 'User Manual',
+      intro: 'Welcome to the CPU Scheduler Simulator! This educational tool allows you to visualize in real-time how an Operating System manages processes. Here is how to get the most out of it:',
+      step1Title: '1. Workload Configuration',
+      step1Desc: 'Use the side panel to define your processes. "Arrival Time" simulates when a program is launched, "Burst Time" indicates how much work the CPU must do. You can use the "Load Example" button for pre-configured scenarios.',
+      step2Title: '2. Algorithm Selection',
+      step2Desc: 'Choose the algorithm from the bottom bar. Each algorithm has different logic: some favor short processes (SJF), others fairness (Round Robin), others urgency (Priority). Change the algorithm and press "Reset" to compare results on the same dataset.',
+      step3Title: '3. Simulation Control',
+      step3Desc: 'You have total control: "Play" for continuous execution, "Step" to advance one cycle at a time (useful for mental debugging), and the speed slider to slow down the action and understand every context switch.',
+      step4Title: '4. Performance Analysis',
+      step4Desc: 'Beyond the visual Gantt chart, observe the statistics table. "Average Waiting Time" is the key efficiency indicator. After simulation, ask the AI for a deep analysis by clicking "Generate Insight".',
+      featuresTitle: 'Advanced Features',
+      feature1: 'Dynamic visualization of Ready Queue to Active State',
+      feature2: 'Support for both Preemptive and Non-Preemptive algorithms',
+      feature3: 'CPU Heatmap to identify idle periods',
+      feature4: 'AI Integration to explain the "why" behind results',
+      tipsTitle: '💡 Did You Know?',
+      tips: [
+        'You can modify processes "on the fly" even when stopped to see queue changes.',
+        'The Quantum (in Round Robin) is crucial: try changing it from 2 to 10 and watch the context switches count drop.',
+        'Use the 💾 button to save or load different test scenarios.'
+      ],
+      close: 'Start Simulating'
     },
     algoInfo: {
       FCFS: 'First Come First Serve (FCFS) is the simplest scheduling algorithm. Processes are executed in the exact order they arrive in the Ready Queue. It is a "non-preemptive" approach, meaning once a process starts execution, it runs to completion without interruption. While simple, it can lead to the "convoy effect" where short processes wait a long time behind long processes.',
