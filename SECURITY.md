@@ -1,19 +1,37 @@
-# Security Policy
+# Policy di Sicurezza
 
-## Supported Versions
+## Segnalazione di vulnerabilita
 
-Use this section to tell people about which versions of your project are
-currently being supported with security updates.
+Se scopri una vulnerabilita di sicurezza in questo progetto, ti chiediamo di segnalarla in modo responsabile.
 
-| Version | Supported          |
-| ------- | ------------------ |
-| 1.x     | :white_check_mark: |
-| < 1.0   | :x:                |
+**Non aprire una Issue pubblica per vulnerabilita di sicurezza.**
 
-## Reporting a Vulnerability
+Invece, contatta il maintainer del progetto tramite il suo [profilo GitHub](https://github.com/carellonicolo) o invia una segnalazione privata attraverso la funzionalita [Security Advisories](../../security/advisories) del repository.
 
-We take the security of this CPU Scheduler Simulator very seriously. If you have found a security vulnerability, please do NOT open an issue.
+## Cosa includere nella segnalazione
 
-Instead, please email `security@example.com` (Replace with actual email or contact method).
+- Descrizione dettagliata della vulnerabilita
+- Passi per riprodurre il problema
+- Potenziale impatto della vulnerabilita
+- Eventuali suggerimenti per la risoluzione
 
-You should receive a response within 48 hours. If for some reason you do not, please follow up via email to ensure we received your original message.
+## Tempi di risposta
+
+- **Conferma di ricezione**: entro 48 ore
+- **Valutazione iniziale**: entro 7 giorni
+- **Rilascio di un fix**: secondo la gravita del problema
+
+## Ambito
+
+Questa policy si applica al codice sorgente ospitato in questo repository e alle eventuali istanze di deploy mantenute dal maintainer.
+
+## Buone pratiche
+
+Questo progetto adotta le seguenti pratiche di sicurezza:
+
+- Dipendenze aggiornate regolarmente
+- Audit periodici con `npm audit`
+- Nessun dato sensibile nel repository
+- Headers di sicurezza per i deploy web (CSP, X-Frame-Options, etc.)
+
+Grazie per aiutarci a mantenere questo progetto sicuro per tutti.
