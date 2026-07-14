@@ -8,8 +8,7 @@ export const analyzeSimulation = async (
   language: Language
 ): Promise<string> => {
   try {
-    // Safely check for process.env.API_KEY to avoid "process is not defined" error in browser
-    const apiKey = (typeof process !== 'undefined' && process.env) ? process.env.API_KEY : undefined;
+    const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
 
     if (!apiKey) {
       return language === 'IT'
